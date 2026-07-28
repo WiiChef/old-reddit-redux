@@ -56,7 +56,7 @@ ORR.render.header = function header(identity, currentSub, currentSort) {
              <li class="user-profile"><a href="/user/${escapeHtml(userName)}">view profile</a></li>
              <li class="user-history"><a href="/user/${escapeHtml(userName)}/comments">history</a></li>
              <li class="user-preferences"><a href="/prefs">preferences</a></li>
-             ${modCount ? `<li class="user-modmail"><a href="/message/moderator">mod mail</a></li>` : ''}
+             ${modCount ? '<li class="user-modmail"><a href="/message/moderator">mod mail</a></li>' : ''}
              <li class="separator"></li>
              <li class="user-flair"><a href="/user/${escapeHtml(userName)}/flair">flair</a></li>
              <li class="user-coins"><a href="/gold">coins</a></li>
@@ -97,7 +97,7 @@ ORR.render.header = function header(identity, currentSub, currentSort) {
 
   // Search form — scoped to current sub if applicable
   const searchAction = currentSub ? `/r/${escapeHtml(currentSub)}/search` : '/search';
-  const searchHidden = currentSub ? `<input type="hidden" name="restrict_sr" value="on" />` : '';
+  const searchHidden = currentSub ? '<input type="hidden" name="restrict_sr" value="on" />' : '';
 
   return `
   <div id="header">

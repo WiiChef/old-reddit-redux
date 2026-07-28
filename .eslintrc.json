@@ -1,0 +1,28 @@
+{
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "webextensions": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-undef": "error",
+    "no-duplicate-imports": "error",
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "quotes": ["error", "single"],
+    "no-var": "error",
+    "prefer-const": "warn",
+    "eqeqeq": "warn",
+    "no-fallthrough": "error",
+    "no-debugger": "error",
+    "no-alert": "off"
+  },
+  "globals": {
+    "ORR": "readonly",
+    "chrome": "readonly"
+  }
+}

@@ -55,3 +55,12 @@ ORR.actions.comment = function comment(parentFullname, text) {
 ORR.actions.subscribe = function subscribe(srFullname, shouldSubscribe) {
   return postForm('/api/subscribe', { sr: srFullname, action: shouldSubscribe ? 'sub' : 'unsub' });
 };
+
+ORR.actions.submit = function submit(subreddit, title, type, url, text, nsfw, spoiler) {
+  const fields = { sr: subreddit, title, kind: type === 'link' ? 'link' : 'self' };
+  if (type === 'link') fields.url = url;
+  if (type === 'self') fields.text = text;
+  if (nsfw) fields.over_18 = 'yes';
+  if (spoiler) fields.spoiler = 'yes';
+  return postForm('/api/submit', fields);
+};
