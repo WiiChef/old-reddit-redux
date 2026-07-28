@@ -45,8 +45,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
-  if (message.type === 'ORR_FETCH') return false;
-
   const { url, options } = message;
 
   fetch(url, { credentials: 'include', ...options })
