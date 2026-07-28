@@ -1755,8 +1755,79 @@ button:active {
 }
 
 /* ============================================================
-   RESPONSIVE
+   RESPONSIVE — WIDESCREEN (min-width breakpoints)
    ============================================================ */
+
+/* 1600px+: expand root container, widen sidebar slightly */
+@media (min-width: 1600px) {
+  #orr-root { max-width: 1920px; }
+  .side { width: 340px; }
+  .titlebox .redditname { font-size: 20px; }
+}
+
+/* 1920px+: full widescreen — use 95% viewport, larger typography */
+@media (min-width: 1920px) {
+  #orr-root { max-width: 95vw; }
+  .side { width: 380px; }
+  .titlebox .redditname { font-size: 22px; }
+  .title { font-size: 16px; }
+  .tagline { font-size: 12px; }
+  .buttons { font-size: 12px; }
+  .thing.comment .usertext-body { font-size: 13.5px; }
+  .thumbnail { width: 80px; height: 57px; }
+  .submit-page { padding: 20px; }
+}
+
+/* 2560px (1440p/QHD): even larger, bigger thumbnails */
+@media (min-width: 2560px) {
+  #orr-root { max-width: 92vw; }
+  .side { width: 420px; }
+  .titlebox .redditname { font-size: 24px; }
+  .title { font-size: 18px; line-height: 1.5; }
+  .tagline { font-size: 13px; }
+  .buttons { font-size: 13px; gap: 14px; }
+  .thing { padding: 12px 16px; gap: 12px; }
+  .thing.comment .usertext-body { font-size: 15px; line-height: 1.6; }
+  .thumbnail { width: 100px; height: 71px; }
+  .submit-page { padding: 24px; }
+  .submit-page h1 { font-size: 20px; }
+}
+
+/* 3840px (4K): scale everything up proportionally */
+@media (min-width: 3840px) {
+  html.orr-active body { font-size: 14px; }
+  #orr-root { max-width: 90vw; }
+  .side { width: 500px; }
+  .titlebox .redditname { font-size: 28px; }
+  .title { font-size: 20px; line-height: 1.5; }
+  .tagline { font-size: 14px; }
+  .buttons { font-size: 14px; gap: 16px; }
+  .thing { padding: 16px 20px; gap: 14px; }
+  .thing.comment .usertext-body { font-size: 16px; line-height: 1.7; }
+  .thumbnail { width: 120px; height: 85px; }
+  .submit-page { padding: 32px; }
+  .submit-page h1 { font-size: 24px; }
+  .tabmenu li a { font-size: 13px; }
+  #search input[type="text"] { width: 300px; font-size: 13px; }
+  .orr-subscribe-btn { font-size: 13px; padding: 8px 12px; }
+}
+
+/* ============================================================
+   RESPONSIVE — NARROW SCREENS (max-width breakpoints)
+   ============================================================ */
+
+/* Below 1200px: tighten sidebar */
+@media (max-width: 1200px) {
+  .side { width: 280px; }
+}
+
+/* Below 1000px: tighten further */
+@media (max-width: 1000px) {
+  .side { width: 250px; }
+  .content-wrapper { gap: 16px; }
+}
+
+/* Below 900px: stack sidebar below content */
 @media (max-width: 900px) {
   .content-wrapper { flex-direction: column; }
   .side { width: 100%; }
