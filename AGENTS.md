@@ -12,6 +12,16 @@ bd close <id>         # Complete work
 bd dolt push          # Push beads data to remote
 ```
 
+## File Edit Rules
+
+**When using the `edit` tool:**
+
+1. **Keep `oldText` under 20 lines** — small surgical edits only. If the change spans more than that, split into multiple edits.
+2. **Always `read()` the file immediately before editing** — never rely on memory of file contents.
+3. **Anchor on unique identifiers** — use function names, variable names, or comment lines as `oldText`. Avoid long blocks of template/HTML strings that are whitespace-sensitive.
+4. **CRLF awareness** — this is a Windows repo. Line ending mismatches (`\r\n` vs `\n`) will cause silent `oldText` failures. Always anchor on text you just read.
+5. **When edits fail, fall back to `bash` (`sed`) or `write()`** — don't retry the same large block.
+
 ## Non-Interactive Shell Commands
 
 **ALWAYS use non-interactive flags** with file operations to avoid hanging on confirmation prompts.

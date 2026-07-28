@@ -327,25 +327,29 @@ html.orr-active body {
 .content-wrapper {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
-  padding: 8px 8px 8px 0;
+  gap: 24px;
+  padding: 10px 12px 10px 0;
 }
 .content-wrapper .content {
   flex: 1;
   min-width: 0;
   padding: 0;
 }
-.content { padding: 8px 8px 8px 0; }
-.sitetable.linklisting { display: flex; flex-direction: column; }
+.content { padding: 10px 12px 10px 0; }
+.sitetable.linklisting {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 
 /* ---- Individual post row ---- */
 .thing {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
   background: #000000;
   border-bottom: 1px solid #1a1a1a;
-  padding: 6px 8px;
+  padding: 8px 12px;
   transition: background 0.15s ease;
 }
 .thing:hover {
@@ -360,11 +364,12 @@ html.orr-active body {
 }
 .thing.archived { opacity: 0.65; }
 .thing .rank {
-  width: 18px;
+  width: 20px;
   text-align: right;
   color: #818384;
   font-size: 12px;
-  padding-top: 4px;
+  padding-top: 6px;
+  flex-shrink: 0;
 }
 
 /* ---- Vote arrows ---- */
@@ -372,25 +377,26 @@ html.orr-active body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 24px;
+  width: 28px;
+  flex-shrink: 0;
 }
 .arrow {
   width: 0;
   height: 0;
   cursor: pointer;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
 }
-.arrow.up { border-bottom: 10px solid #545452; }
+.arrow.up { border-bottom: 11px solid #545452; }
 .arrow.up.upmod { border-bottom-color: #46d160; } /* old.reddit green */
-.arrow.down { border-top: 10px solid #545452; }
+.arrow.down { border-top: 11px solid #545452; }
 .arrow.down.downmod { border-top-color: #ff4500; } /* old.reddit red */
 .arrow:hover { opacity: 0.8; }
 .arrow:active { opacity: 0.6; }
 .score {
   font-size: 11px;
   font-weight: bold;
-  margin: 3px 0;
+  margin: 4px 0;
   color: #d7dadc;
 }
 .score.unvoted { color: #d7dadc; }
@@ -404,17 +410,19 @@ html.orr-active body {
   flex-shrink: 0;
   display: block;
   background: #0a0a0a;
+  border-radius: 2px;
 }
 .thumbnail img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 2px;
 }
 .thumbnail.self { background: #0a1416; }
 
 /* ---- Entry (title, meta, buttons) ---- */
 .entry { flex: 1; min-width: 0; }
-.title { font-size: 13.5px; }
+.title { font-size: 14px; line-height: 1.4; margin: 0 0 2px; }
 .title a.title {
   color: #d7dadc;
   text-decoration: none;
@@ -440,7 +448,8 @@ html.orr-active body {
 .tagline {
   color: #818384;
   font-size: 11px;
-  margin: 2px 0;
+  margin: 3px 0;
+  line-height: 1.4;
 }
 .tagline .author { color: #4fbcff; text-decoration: none; }
 .tagline a:hover { text-decoration: underline; }
@@ -515,8 +524,8 @@ html.orr-active body {
 .buttons {
   list-style: none;
   display: flex;
-  gap: 8px;
-  margin: 4px 0 0;
+  gap: 10px;
+  margin: 6px 0 0;
   padding: 0;
   font-size: 11px;
 }
@@ -574,7 +583,7 @@ html.orr-active body {
 }
 .expando-button:hover { border-color: #4fbcff; }
 
-.expando { margin-top: 6px; }
+.expando { margin-top: 8px; }
 .media-preview { max-width: 100%; }
 .media-preview-content { display: block; }
 .media-preview .preview {
@@ -659,9 +668,10 @@ html.orr-active body {
 .thing.link .entry .usertext-body {
   background: #050505;
   border: 1px solid #1a1a1a;
-  padding: 8px;
-  margin-top: 6px;
+  padding: 12px;
+  margin-top: 8px;
   font-size: 13px;
+  line-height: 1.6;
   color: #d7dadc;
 }
 
