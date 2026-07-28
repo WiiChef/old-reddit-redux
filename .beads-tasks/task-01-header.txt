@@ -1,0 +1,19 @@
+The header is missing many elements present in old.reddit.com.
+
+Missing header elements:
+1. Reddit logo should use the classic old.reddit logo (not a plain orange circle)
+2. Missing "popular" dropdown menu in header
+3. Missing user dropdown menu (inbox, preferences, logout, etc.)
+4. Missing "create post" and "create community" buttons in header
+5. Search bar should have better styling matching old.reddit (rounded, with proper placeholder)
+6. Missing "best", "controversial" in tabmenu
+7. Missing time filter controls for top/controversial (hour, day, week, month, year, all)
+8. Missing breadcrumbs below tabmenu (e.g. "home > r/subreddit")
+
+Implementation:
+- Update src/render/header.js to add missing elements
+- Add corresponding CSS in src/styles/oldreddit.css
+- Wire up user dropdown and popular dropdown interactions in main.js
+- Add time filter URL params (t=hour, t=day, etc.) to tab links
+
+Reference: old.reddit.com header had logo, sr-header-area with current sub, user panel with dropdown, search form, and tabmenu with hot/new/rising/top/controversial/best.

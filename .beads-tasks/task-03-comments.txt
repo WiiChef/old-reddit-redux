@@ -1,0 +1,21 @@
+Comment submission UI is not implemented. The API action exists (ORR.actions.comment) but there is no reply textarea rendered anywhere.
+
+Missing comment features:
+1. Reply textarea on each comment (click "reply" button shows textarea + submit)
+2. Edit comment UI (old.reddit showed edit button for your own comments)
+3. Award button on comments (old.reddit had award icons)
+4. Report button on comments
+5. Share button on comments
+6. "Show expanded comment" feature (old.reddit had this for long comments)
+7. Comment sorting controls (Best, Confident, Controversial, Top, New, Old, Live, Queries)
+8. Comment collapse/expand all buttons
+9. Comment depth indicator and nesting depth controls
+10. "Stickied comment" visual styling for moderator pinned comments
+11. Remove "reply" button placeholder that does nothing in current code
+
+Implementation:
+- Add reply form UI in src/render/comments.js
+- Wire up form submission in main.js event delegation
+- Add comment sorting controls in the commentarea menuarea
+- Add report/share buttons to comment buttons list
+- Style expanded comment toggle

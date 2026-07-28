@@ -1,0 +1,19 @@
+Search functionality is minimal. Old.reddit.com had comprehensive search with many filters.
+
+Missing search features:
+1. Sort by options: Relevance, Hot, Top, New, Comments
+2. Time filters: Past hour, 24 hours, This week, This month, This year, All time
+3. Restrict to subreddit toggle (already partially implemented)
+3. Advanced search options: exact phrase, authors, domains, posts/comments toggle
+4. Search history/suggestions
+5. No results state styling
+6. Search results count display
+7. Search within specific subreddit from header search (already works but needs better UX)
+
+Implementation:
+- Add search filter controls below tabmenu on search results page
+- Add sort by dropdown for search results
+- Add time filter buttons
+- Wire up search params to API calls
+- Style search filters to match old.reddit search page
+- Add search results count

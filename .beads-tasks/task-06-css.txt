@@ -1,0 +1,28 @@
+The CSS needs significant work to match old.reddit.com styling precisely.
+
+CSS gaps:
+1. Missing styles for many UI elements not yet rendered (filters, awards, flairs, etc.)
+2. Hover states inconsistent with old.reddit (old.reddit had specific hover backgrounds)
+3. Missing print styles
+4. Missing award animation styles
+5. Missing tooltip styles (old.reddit had hover tooltips on many elements)
+6. Missing focus/active states for keyboard navigation
+7. Score colors should match old.reddit (green for upvoted, red for downvoted - current uses different colors)
+8. Comment thread line styling (old.reddit had a vertical line connecting nested comments)
+9. Missing styles for error states and empty states
+10. Missing responsive breakpoints for mobile
+11. Old.reddit used specific font sizes and line heights that differ from current
+12. Missing styles for dropdown menus
+13. Missing styles for modal dialogs (report, share, etc.)
+14. Missing styles for loading skeletons that match old.reddit
+15. Old.reddit had specific border colors and spacing that need matching
+
+Implementation:
+- Audit CSS against old.reddit.com screenshots and known styling
+- Fix score colors to match old.reddit (upvote=green #46d160, downvote=red #ff4500)
+- Add comment nesting lines (border-left on .child containers)
+- Add missing hover/focus/active states
+- Add tooltip styles
+- Add dropdown menu styles
+- Add modal dialog styles
+- Add print media query styles

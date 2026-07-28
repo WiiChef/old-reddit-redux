@@ -1,0 +1,22 @@
+The router currently handles only 6 route types. Old.reddit.com had many more routes that need to be supported.
+
+Current routes: front page, subreddit, subreddit-sort, post, user, search
+
+Missing routes to add:
+1. best, controversial - additional front page sorts
+2. Post URLs with comment ID deep links - needs anchor scrolling to specific comment
+3. Wiki pages - /r/SUBREDDIT/wiki/page
+4. User profile sub-pages: comments, submitted, upvoted, downvoted, saved
+5. Favorites and saved posts pages
+6. Private messages and inbox
+7. About page as a route (already fetched but not a route)
+8. Post submission page
+9. Search with time filter support
+10. Domain filtering pages
+11. Subreddit sort pages with time filters (hour, day, week, month, year, all)
+12. Random and randall navigation
+
+Implementation:
+- Update src/router.js ROUTES array with new patterns
+- Add corresponding handlers in src/main.js for each route type
+- Some routes (wiki, messages) should fall through to native reddit.com initially

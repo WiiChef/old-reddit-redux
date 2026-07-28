@@ -1,0 +1,28 @@
+Post listings need many improvements to match old.reddit.com.
+
+Missing listing features:
+1. Post filtering controls (All, Images & Videos, Self, Links, Galleries, Videos, Live Videos, Polls)
+2. NSFW overlay/warning on NSFW posts and subreddits
+3. Quarantine warning page for quarantined subreddits
+4. Award icons displayed on posts (old.reddit showed award counts and icons)
+5. User flair on post author names
+6. Comment flair
+7. Post sorting controls within the listing (not just tabmenu)
+8. "Share" button on posts
+9. "Report" button on posts
+10. "Hide" button feedback (currently works but no visual confirmation)
+11. Crosspost indicator (old.reddit showed crosspost badge with destination sub)
+12. Poll posts rendering
+13. Archived post indicator and disabled actions
+14. Locked post indicator
+15. Spoiler tag handling (old.reddit had spoiler title support)
+16. Flair CSS support (background colors, border colors from API)
+
+Implementation:
+- Add filter bar below tabmenu in listing render
+- Add NSFW detection and overlay CSS
+- Add award rendering from post data
+- Add user flair rendering
+- Add crosspost badge
+- Add archived/locked indicators
+- Wire up filter params to fetch calls

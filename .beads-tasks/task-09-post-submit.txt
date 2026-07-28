@@ -1,0 +1,24 @@
+Post submission is not implemented. Old.reddit.com had a full post submission form.
+
+Missing submission features:
+1. Text post submission form
+2. Link post submission form
+3. Image/video upload support
+4. Gallery post support
+5. Post title input with character count
+6. Subreddit selection/validation
+7. NSFW toggle
+8. Spoiler toggle
+9. Post flair selection (if sub has flairs)
+10. Preview button
+11. Submit button with validation
+12. Error handling for submission failures
+
+Implementation:
+- Create post submission page render function
+- Add /r/SUB/submit route handler
+- Fetch subreddit submission settings (allowed post types, required flairs, etc.)
+- Build submission form with proper fields
+- Wire up form submission via API
+- Add validation and error handling
+- Style form to match old.reddit submission page

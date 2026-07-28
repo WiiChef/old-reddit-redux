@@ -1,0 +1,22 @@
+The API layer needs improvements for robustness and missing functionality.
+
+Missing API features:
+1. Rate limiting handling - currently just retries after 4s, needs exponential backoff
+2. Error handling for specific Reddit error codes (429 rate limit, 403 forbidden, 404 not found)
+3. CSRF token handling - Reddit uses x-csrf-header, current modhash approach may break
+4. WebSocket support for live updates (live threads, chat)
+5. Cached identity should refresh on tab focus (in case user logs in/out in another tab)
+6. Better error messages for the user
+7. Request deduplication (multiple simultaneous requests for same URL)
+8. Pagination helper for endpoints that return many results
+9. JSON error response parsing from Reddit API
+10. Background service worker should handle request timeouts better
+
+Implementation:
+- Add rate limit detection and exponential backoff in api/fetch.js
+- Add specific error type detection (429, 403, 404, 500, etc.)
+- Add x-csrf-header support alongside modhash
+- Add visibilitychange listener to refresh identity cache
+- Add request deduplication layer
+- Improve error messages and user feedback
+- Add timeout handling in background.js
