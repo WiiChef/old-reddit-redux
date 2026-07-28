@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "old_reddit_redux",
+  "project_id": "df563df3-e8e9-42fa-a8ee-99853f01901e"
+}
