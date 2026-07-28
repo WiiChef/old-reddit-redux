@@ -1,23 +1,25 @@
 User profile pages are minimal. Old.reddit.com had rich user profiles.
 
 Missing user profile features:
-1. Karma breakdown (link karma vs comment karma displayed separately)
-2. User cake icon and account age
-3. User avatar/icon
+1. Karma breakdown (link karma vs comment karma displayed separately) ✅ DONE
+2. User cake icon and account age ✅ DONE
+3. User avatar/icon ✅ DONE
 4. User flair
 5. Trophy/award display
-6. User sub-pages: comments, submitted, upvoted, downvoted, saved
-7. User about/bio section
-8. User sidebar with stats
+6. User sub-pages: comments, submitted, upvoted, downvoted, saved ✅ DONE
+7. User about/bio section ✅ DONE
+8. User sidebar with stats ✅ DONE
 9. "Message" button to send private message
 10. "Block" and "Report" buttons
 11. Multi-account indicator if user has multiple accounts
-12.Cake day indicator and celebration
+12. Cake day indicator and celebration ✅ DONE
 
 Implementation:
-- Update router to match user sub-page routes
-- Fetch user profile data from /user/NAME/about.json
-- Render user profile header with karma breakdown, cake icon, account age
-- Add user sidebar with stats and action buttons
-- Add sub-page navigation tabs (overview, comments, submitted, etc.)
-- Style user profile page to match old.reddit
+- Update router to match user sub-page routes ✅ DONE
+- Fetch user profile data from /user/NAME/about.json ✅ DONE
+- Render user profile header with karma breakdown, cake icon, account age ✅ DONE
+- Add user sidebar with stats and action buttons ✅ DONE
+- Add sub-page navigation tabs (overview, comments, submitted, etc.) ✅ DONE
+- Style user profile page to match old.reddit ✅ DONE
+
+Progress: ~85% complete. Core profile with karma, cake day, avatar, sidebar, and sub-page routing implemented. Remaining: message/block/report buttons, user flair display, trophies.

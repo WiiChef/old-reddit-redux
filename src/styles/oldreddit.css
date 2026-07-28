@@ -857,6 +857,395 @@ html.orr-active body {
 .titlebox .sidebar-description a { color: #4fbcff; }
 
 /* ============================================================
+   SUBREDDIT SIDEBAR SECTIONS (Rules, Mods, About)
+   ============================================================ */
+.rules-section,
+.mods-section,
+.about-community {
+  background: #000000;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.rules-section h3,
+.mods-section h3,
+.about-community h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #d7dadc;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 4px;
+}
+.rules-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.rule-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 11px;
+}
+.rule-item:last-child { border-bottom: none; }
+.rule-number {
+  color: #818384;
+  margin-right: 4px;
+  font-weight: bold;
+}
+.rule-name {
+  color: #d7dadc;
+  font-weight: bold;
+}
+.rule-short-desc {
+  display: block;
+  color: #818384;
+  margin-top: 2px;
+}
+.mods-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mod-link {
+  color: #4fbcff;
+  text-decoration: none;
+  font-size: 11px;
+}
+.mod-link:hover { text-decoration: underline; }
+.community-created,
+.community-desc {
+  font-size: 11px;
+  color: #818384;
+  margin: 4px 0;
+}
+.sidebar-nav {
+  margin-top: 8px;
+  padding: 10px 0;
+  border-top: 1px solid #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar-nav a {
+  color: #4fbcff;
+  text-decoration: none;
+  font-size: 11px;
+  padding: 2px 0;
+}
+.sidebar-nav a:hover { text-decoration: underline; }
+
+/* ============================================================
+   USER SIDEBAR / PROFILE
+   ============================================================ */
+.user-nav {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.user-nav a {
+  color: #4fbcff;
+  text-decoration: none;
+  font-size: 11px;
+  padding: 3px 0;
+}
+.user-nav a:hover { text-decoration: underline; }
+.user-created,
+.user-cake {
+  font-size: 11px;
+  color: #818384;
+  margin: 4px 0;
+}
+.cake-icon {
+  margin-right: 4px;
+}
+.total-karma,
+.link-karma,
+.comment-karma {
+  text-align: center;
+}
+
+/* ============================================================
+   COMMENT SORTING & COLLAPSE CONTROLS
+   ============================================================ */
+.comment-count {
+  color: #818384;
+  font-size: 11px;
+  margin-right: 12px;
+}
+.comment-sort-menu {
+  list-style: none;
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+}
+.comment-sort-menu li {
+  padding: 0;
+}
+.comment-sort-menu li a {
+  display: inline-block;
+  padding: 2px 6px;
+  color: #4fbcff;
+  text-decoration: none;
+  font-size: 11px;
+  border-radius: 2px;
+}
+.comment-sort-menu li.selected a {
+  background: #0a0a0a;
+  font-weight: bold;
+  color: #d7dadc;
+  border: 1px solid #1a1a1a;
+}
+.comment-sort-menu li a:hover { text-decoration: underline; }
+.collapse-controls {
+  margin-left: 12px;
+  display: inline-flex;
+  gap: 8px;
+  vertical-align: middle;
+}
+.orr-collapse-all,
+.orr-expand-all {
+  color: #4fbcff;
+  font-size: 11px;
+  text-decoration: none;
+}
+.orr-collapse-all:hover,
+.orr-expand-all:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   REPLY FORM
+   ============================================================ */
+.reply-form {
+  margin-top: 6px;
+  padding: 8px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+}
+.reply-textarea {
+  width: 100%;
+  background: #000;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+  color: #d7dadc;
+  font-size: 12px;
+  padding: 6px;
+  resize: vertical;
+  font-family: Verdana, Geneva, Arial, sans-serif;
+  outline: none;
+}
+.reply-textarea:focus { border-color: #4fbcff; }
+.reply-actions {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+.reply-submit-btn,
+.reply-cancel-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.reply-submit-btn {
+  background: #ff4500;
+  color: #fff;
+  border: none;
+}
+.reply-submit-btn:hover { background: #e03d00; }
+.reply-submit-btn:disabled {
+  background: #545452;
+  cursor: not-allowed;
+}
+.reply-cancel-btn {
+  background: transparent;
+  color: #818384;
+  border: 1px solid #1a1a1a;
+}
+.reply-cancel-btn:hover { border-color: #818384; color: #d7dadc; }
+
+/* ============================================================
+   SHARE / REPORT / SAVE BUTTONS
+   ============================================================ */
+.share-button,
+.report-button,
+.save-button {
+  color: #818384;
+  text-decoration: none;
+  font-size: 11px;
+}
+.share-button:hover,
+.report-button:hover,
+.save-button:hover {
+  color: #d7dadc;
+  text-decoration: underline;
+}
+
+/* ============================================================
+   COMMENT FLAIR & AWARDS
+   ============================================================ */
+.comment-flair {
+  display: inline-block;
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 2px;
+  margin-left: 3px;
+  vertical-align: middle;
+  background: #1a3c5e;
+  color: #d7dadc;
+}
+.comment-awards {
+  color: #818384;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+/* ============================================================
+   STICKIED COMMENTS
+   ============================================================ */
+.stickied-comment {
+  background: #001a0d;
+  border-left-color: #2d6b3f !important;
+}
+
+/* ============================================================
+   ACTION SUCCESS INDICATOR
+   ============================================================ */
+.orr-action-success {
+  color: #4fbcff;
+  font-size: 11px;
+  padding: 4px 0;
+  animation: orr-fadeout 2s forwards;
+}
+@keyframes orr-fadeout {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ============================================================
+   SUBMIT PAGE
+   ============================================================ */
+.submit-page {
+  background: #000000;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+  padding: 16px;
+}
+.submit-page h1 {
+  font-size: 16px;
+  margin: 0 0 12px;
+  color: #d7dadc;
+}
+.submit-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.submit-tab {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: #0a0a0a;
+  color: #818384;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.submit-tab:hover { border-color: #4fbcff; color: #d7dadc; }
+.submit-tab.active {
+  background: #ff4500;
+  color: #fff;
+  border-color: #ff4500;
+}
+.submit-field {
+  margin-bottom: 10px;
+}
+.submit-field label {
+  display: block;
+  font-size: 11px;
+  color: #818384;
+  margin-bottom: 4px;
+}
+.submit-field input[type="text"],
+.submit-field input[type="url"],
+.submit-field textarea {
+  width: 100%;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+  color: #d7dadc;
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+  font-family: Verdana, Geneva, Arial, sans-serif;
+}
+.submit-field input:focus,
+.submit-field textarea:focus {
+  border-color: #4fbcff;
+}
+.submit-field input[type="file"] {
+  font-size: 11px;
+  color: #818384;
+}
+.submit-actions {
+  margin-top: 12px;
+}
+.submit-post-btn {
+  background: #ff4500;
+  color: #fff;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.submit-post-btn:hover { background: #e03d00; }
+
+/* ============================================================
+   SEARCH FILTERS
+   ============================================================ */
+.search-filters {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #1a1a1a;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.search-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #818384;
+}
+.search-filter-group label {
+  color: #818384;
+}
+.search-filter-group select {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #d7dadc;
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  outline: none;
+}
+.search-filter-group select:focus { border-color: #4fbcff; }
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 900px) {
@@ -865,4 +1254,5 @@ html.orr-active body {
   #header-bottom-right { flex-wrap: wrap; gap: 6px; }
   #search input[type="text"] { width: 140px; }
   .create-buttons { display: none; }
+  .submit-page { padding: 10px; }
 }

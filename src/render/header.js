@@ -139,5 +139,55 @@ ORR.render.header = function header(identity, currentSub, currentSort) {
     </div>
     ${timeFilterHtml(sort, new URLSearchParams(location.search || '').get('t') || 'week')}
     ${breadcrumbsHtml(currentSub)}
+    ${searchFiltersHtml()}
   </div>`;
 };
+
+function searchFiltersHtml() {
+  // Only show search filters on search pages
+  if (!location.pathname.includes('/search')) return '';
+  const params = new URLSearchParams(location.search || '');
+  const sort = params.get('sort') || 'relevance';
+  const time = params.get('t') || 'all';
+
+  const sortOptions = [
+    { key: 'relevance', label: 'relevance' },
+    { key: 'hot', label: 'hot' },
+    { key: 'top', label: 'top' },
+    { key: 'new', label: 'new' },
+    { key: 'comments', label: 'comments' },
+  ];
+
+  const timeOptions = [
+    { key: 'all', label: 'all time' },
+    { key: 'hour', label: 'past hour' },
+    { key: 'day', label: 'past day' },
+    { key: 'week', label: 'past week' },
+    { key: 'month', label: 'past month' },
+    { key: 'year', label: 'past year' },
+  ];
+
+  const sortSelect = sortOptions.map((o) =>
+    `<option value="${o.key}" ${o.key === sort ? 'selected' : ''}>${o.label}</option>`
+  ).join('');
+
+  const timeSelect = timeOptions.map((o) =>
+    `<option value="${o.key}" ${o.key === time ? 'selected' : ''}>${o.label}</option>`
+  ).join('');
+
+  return `
+  <div class="search-filters">
+    <div class="search-filter-group">
+      <label>Sort by:</label>
+      <select id="search-sort">
+        ${sortSelect}
+      </select>
+    </div>
+    <div class="search-filter-group">
+      <label>From:</label>
+      <select id="search-time">
+        ${timeSelect}
+      </select>
+    </div>
+  </div>`;
+}

@@ -132,12 +132,29 @@ function renderComment(child) {
   const bodyHtml = embedMedia(ta.value);
   const likesNum = d.likes === true ? 1 : d.likes === false ? -1 : 0;
 
+  // Stickied (moderator pinned) comment styling
+  const stickiedClass = d.stickied ? ' stickied-comment' : '';
+
+  // Comment flair
+  const commentFlair = d.author_flair_css_class || d.author_flair_text
+    ? `<span class="comment-flair" ${d.author_flair_background_color ? `style="background:${escapeHtml(d.author_flair_background_color)};${d.author_flair_text_color ? 'color:' + escapeHtml(d.author_flair_text_color) + ';' : ''}"` : ''}>${escapeHtml(d.author_flair_text || '')}</span>`
+    : '';
+
+  // Award count display
+  const awardCount = (d.all_awardings && d.all_awardings.length) || (d.awards && d.awards.length)
+    ? `<span class="comment-awards" title="awarded">${(d.all_awardings ? d.all_awardings.reduce((s, a) => s + (a.count || 1), 0) : d.awards ? d.awards.reduce((s, a) => s + (a.count || 1), 0) : 0)} awards</span>`
+    : '';
+
+  // Archived / locked
+  const archivedClass = d.archived ? ' archived' : '';
+  const lockedClass = d.locked ? ' locked' : '';
+
   const replies = d.replies && d.replies.data
     ? `<div class="child">${d.replies.data.children.map(renderComment).join('')}</div>`
     : '';
 
   return `
-  <div class="thing comment id-${d.name}" data-fullname="${d.name}">
+  <div class="thing comment id-${d.name}${stickiedClass}${archivedClass}${lockedClass}" data-fullname="${d.name}">
     <div class="midcol">
       <div class="arrow up ${d.likes === true ? 'upmod' : ''}" data-fullname="${d.name}" data-dir="1"></div>
       <div class="arrow down ${d.likes === false ? 'downmod' : ''}" data-fullname="${d.name}" data-dir="-1"></div>
@@ -145,13 +162,19 @@ function renderComment(child) {
     <div class="entry">
       <p class="tagline">
         <a class="author" href="/user/${escapeHtml(d.author)}">${escapeHtml(d.author)}</a>
+        ${commentFlair}
         <span class="score" data-score="${d.score}" data-likes="${likesNum}" data-suffix=" points">${ORR.formatScore(d.score)} points</span>
+        ${awardCount}
         <time>${timeAgo(d.created_utc)}</time>
         <a href="#" class="collapse-toggle">[\u2013]</a>
       </p>
       <div class="usertext-body">${bodyHtml}</div>
       <ul class="flat-list buttons">
+        <li><a href="#" class="comment-sort-link" data-sort="best">sort comments</a></li>
         <li><a href="#" class="reply-button" data-fullname="${d.name}">reply</a></li>
+        <li><a href="#" class="share-button" data-permalink="${d.permalink}">share</a></li>
+        <li><a href="#" class="save-button" data-fullname="${d.name}">save</a></li>
+        <li><a href="#" class="report-button" data-fullname="${d.name}">report</a></li>
       </ul>
       ${replies}
     </div>
@@ -205,15 +228,47 @@ ORR.render.buildMoreChildrenTree = function buildMoreChildrenTree(things, rootPa
   return roots;
 };
 
+// Comment sorting controls HTML
+function renderCommentSortControls(currentSort) {
+  const sorts = [
+    { key: 'conf', label: 'Confident' },
+    { key: 'top', label: 'Best' },
+    { key: 'new', label: 'New' },
+    { key: 'controversial', label: 'Controversial' },
+    { key: 'old', label: 'Old' },
+    { key: 'qa', label: 'Live' },
+  ];
+  const items = sorts.map((s) =>
+    `<li class="${s.key === currentSort ? 'selected' : ''}"><a href="?sort=${s.key}">${s.label}</a></li>`
+  ).join('');
+  return `<ul class="comment-sort-menu">${items}</ul>`;
+}
+
+// Collapse all / expand all buttons
+function renderCollapseControls() {
+  return `
+    <a href="#" class="orr-collapse-all" data-action="collapse-all">[-] Collapse all</a>
+    <a href="#" class="orr-expand-all" data-action="expand-all">[+] Expand all</a>`;
+}
+
 ORR.render.postPage = function postPage(postListing, commentListing, headerHtml) {
   const post = postListing.data.children[0].data;
   const comments = commentListing.data.children.map(renderComment).join('');
+  const query = ORR.parseQuery(location.search);
+  const currentSort = query.sort || 'conf';
+
   return `
   ${headerHtml}
   <div class="content" role="main">
     <div class="sitetable linklisting">${renderPostHeader(post)}</div>
     <div class="commentarea" data-link-id="${post.name}">
-      <div class="menuarea">${commentListing.data.children.length} comments</div>
+      <div class="menuarea">
+        <span class="comment-count">${commentListing.data.children.length} comments</span>
+        ${renderCommentSortControls(currentSort)}
+        <span class="collapse-controls">
+          ${renderCollapseControls()}
+        </span>
+      </div>
       <div class="sitetable nestedlisting">${comments}</div>
     </div>
   </div>`;

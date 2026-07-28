@@ -42,22 +42,37 @@
         // Pass through time filter param (t=hour/day/week/month/year/all)
         const fetchQuery = { ...query };
         if (fetchQuery.t) fetchQuery.t = fetchQuery.t;
-        const [listing, about] = await Promise.all([
+        const [listing, about, rules, mods] = await Promise.all([
           ORR.api.fetchListing(`/r/${sub}/${sort}`, fetchQuery),
           ORR.api.fetchSubredditAbout(sub).catch(() => null),
+          ORR.api.fetchSubredditRules(sub).catch(() => []),
+          ORR.api.fetchSubredditMods(sub).catch(() => []),
         ]);
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, sub, sort);
-        const sidebarHtml = ORR.render.sidebar(about);
+        const sidebarHtml = ORR.render.sidebar(about, rules ? (rules.data || rules) : [], mods ? mods.data : []);
         html = ORR.render.listing(listing, { headerHtml, sidebarHtml });
         listingAfter = listing.data.after;
         nextPageFetcher = (after) => ORR.api.fetchListing(`/r/${sub}/${sort}`, { ...fetchQuery, after });
+      } else if (match.name === 'user-profile') {
+        const username = match.params[0];
+        const [listing, profile] = await Promise.all([
+          ORR.api.fetchUser(username, query),
+          ORR.api.fetchUserProfile(username).catch(() => null),
+        ]);
+        if (myToken !== renderToken) return;
+        const headerHtml = ORR.render.header(identity, null);
+        const sidebarHtml = ORR.render.userSidebar(profile);
+        html = ORR.render.listing(listing, { headerHtml, sidebarHtml, isUserPage: true });
+        listingAfter = listing.data.after;
+        nextPageFetcher = (after) => ORR.api.fetchUser(username, { ...query, after });
       } else if (match.name === 'user') {
         const username = match.params[0];
         const listing = await ORR.api.fetchUser(username, query);
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, null);
-        html = ORR.render.listing(listing, { headerHtml });
+        const sidebarHtml = ORR.render.userSidebar(null);
+        html = ORR.render.listing(listing, { headerHtml, sidebarHtml, isUserPage: true });
         listingAfter = listing.data.after;
         nextPageFetcher = (after) => ORR.api.fetchUser(username, { ...query, after });
       } else if (match.name === 'user-comments' || match.name === 'user-submitted' || match.name === 'user-upvoted' || match.name === 'user-downvoted' || match.name === 'user-saved') {
@@ -66,7 +81,8 @@
         const listing = await ORR.api.fetchUser(username, { ...query, sort: query.sort || 'new' });
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, null);
-        html = ORR.render.listing(listing, { headerHtml });
+        const sidebarHtml = ORR.render.userSidebar(null);
+        html = ORR.render.listing(listing, { headerHtml, sidebarHtml, isUserPage: true });
         listingAfter = listing.data.after;
         nextPageFetcher = (after) => ORR.api.fetchUser(username, { ...query, after });
       } else if (match.name === 'search') {
@@ -94,6 +110,11 @@
         html = ORR.render.listing(listing, { headerHtml });
         listingAfter = listing.data.after;
         nextPageFetcher = (after) => ORR.api.fetchListing(`/domain/${domain}`, { ...query, after });
+      } else if (match.name === 'submit') {
+        const sub = match.params[0] || '';
+        if (myToken !== renderToken) return;
+        const headerHtml = ORR.render.header(identity, sub || null);
+        html = ORR.render.submitPage(sub, headerHtml);
       } else {
         // front page, /hot, /new, /top, /rising, /controversial, /best
         const sort = (match.params[0] || 'hot');
@@ -222,8 +243,34 @@
     </div>`);
   }
 
-  // ---- Event delegation for votes / save / hide / collapse ----
+  // Search filter change handler
+  function applySearchFilters() {
+    const sortSelect = document.getElementById('search-sort');
+    const timeSelect = document.getElementById('search-time');
+    if (!sortSelect || !timeSelect) return;
+    const params = new URLSearchParams(location.search || '');
+    params.set('sort', sortSelect.value);
+    params.set('t', timeSelect.value);
+    const newUrl = `${location.pathname}?${params.toString()}`;
+    history.pushState(null, '', newUrl);
+    window.dispatchEvent(new Event('orr:locationchange'));
+  }
+
+  // ---- Event delegation for votes / save / hide / collapse / reply / etc ----
   document.addEventListener('click', async (e) => {
+    // Search filter changes (use change event, but also handle click for selects)
+    const searchSort = e.target.closest('#search-sort');
+    if (searchSort) {
+      e.preventDefault();
+      applySearchFilters();
+      return;
+    }
+    const searchTime = e.target.closest('#search-time');
+    if (searchTime) {
+      e.preventDefault();
+      applySearchFilters();
+      return;
+    }
     const arrow = e.target.closest('.arrow');
     if (arrow) {
       e.preventDefault();
@@ -258,6 +305,80 @@
       return;
     }
 
+    // Reply button — show/hide reply form
+    const replyBtn = e.target.closest('.reply-button');
+    if (replyBtn) {
+      e.preventDefault();
+      const thing = replyBtn.closest('.thing.comment');
+      const existing = thing && thing.querySelector('.reply-form');
+      if (existing) {
+        existing.remove();
+        return;
+      }
+      const parentFullname = replyBtn.dataset.fullname;
+      const postThing = document.querySelector('.thing.link[data-fullname]');
+      const linkId = postThing ? postThing.dataset.fullname : '';
+      const formHtml = `
+        <div class="reply-form">
+          <textarea class="reply-textarea" placeholder="Reply as ${identity ? (identity.data && identity.data.name) || '' : 'guest'}..." rows="4"></textarea>
+          <div class="reply-actions">
+            <button class="reply-submit-btn" data-parent="${parentFullname}" data-link-id="${linkId}">reply</button>
+            <button class="reply-cancel-btn">cancel</button>
+          </div>
+        </div>`;
+      if (thing) {
+        const buttonsUl = thing.querySelector('.buttons');
+        if (buttonsUl) {
+          buttonsUl.insertAdjacentHTML('afterend', formHtml);
+        }
+      }
+      const textarea = thing && thing.querySelector('.reply-textarea');
+      if (textarea) textarea.focus();
+      return;
+    }
+
+    // Reply form submit
+    const replySubmit = e.target.closest('.reply-submit-btn');
+    if (replySubmit) {
+      e.preventDefault();
+      const parentFullname = replySubmit.dataset.parent;
+      const linkId = replySubmit.dataset.linkId;
+      const form = replySubmit.closest('.reply-form');
+      const textarea = form && form.querySelector('.reply-textarea');
+      const text = (textarea && textarea.value.trim()) || '';
+      if (!text) { alert('Please enter some text.'); textarea && textarea.focus(); return; }
+      replySubmit.disabled = true;
+      replySubmit.textContent = 'posting...';
+      try {
+        await ORR.actions.comment(parentFullname, text);
+        form.remove();
+        // Show a brief success indicator
+        const thing = replySubmit.closest('.thing.comment') || replySubmit.closest('.commentarea');
+        if (thing) {
+          const indicator = document.createElement('div');
+          indicator.className = 'orr-action-success';
+          indicator.textContent = 'Comment posted!';
+          thing.appendChild(indicator);
+          setTimeout(() => indicator.remove(), 2000);
+        }
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        replySubmit.disabled = false;
+        replySubmit.textContent = 'reply';
+      }
+      return;
+    }
+
+    // Reply form cancel
+    const replyCancel = e.target.closest('.reply-cancel-btn');
+    if (replyCancel) {
+      e.preventDefault();
+      const form = replyCancel.closest('.reply-form');
+      if (form) form.remove();
+      return;
+    }
+
     const saveBtn = e.target.closest('.save-button');
     if (saveBtn) {
       e.preventDefault();
@@ -289,6 +410,33 @@
       const thing = collapseToggle.closest('.thing.comment');
       thing.classList.toggle('collapsed');
       collapseToggle.textContent = thing.classList.contains('collapsed') ? '[+]' : '[\u2013]';
+      return;
+    }
+
+    // Collapse all / Expand all
+    const collapseAllBtn = e.target.closest('.orr-collapse-all');
+    if (collapseAllBtn) {
+      e.preventDefault();
+      qsa('.thing.comment', document).forEach((c) => {
+        if (!c.classList.contains('collapsed')) {
+          c.classList.add('collapsed');
+          const toggle = c.querySelector('.collapse-toggle');
+          if (toggle) toggle.textContent = '[+]';
+        }
+      });
+      return;
+    }
+
+    const expandAllBtn = e.target.closest('.orr-expand-all');
+    if (expandAllBtn) {
+      e.preventDefault();
+      qsa('.thing.comment', document).forEach((c) => {
+        if (c.classList.contains('collapsed')) {
+          c.classList.remove('collapsed');
+          const toggle = c.querySelector('.collapse-toggle');
+          if (toggle) toggle.textContent = '[\u2013]';
+        }
+      });
       return;
     }
 
@@ -364,6 +512,55 @@
       return;
     }
 
+    // Submit page tab switching
+    const submitTab = e.target.closest('.submit-tab');
+    if (submitTab) {
+      e.preventDefault();
+      const type = submitTab.dataset.type;
+      const form = document.getElementById('orr-submit-form');
+      if (form) {
+        qsa('.submit-tab', form).forEach((t) => t.classList.remove('active'));
+        submitTab.classList.add('active');
+        const typeInput = form.querySelector('#submit-type');
+        if (typeInput) typeInput.value = type;
+        // Show/hide fields based on type
+        const urlField = form.querySelector('.submit-url-field');
+        const textField = form.querySelector('.submit-text-field');
+        const fileField = form.querySelector('.submit-file-field');
+        if (urlField) urlField.style.display = type === 'link' ? '' : 'none';
+        if (textField) textField.style.display = type === 'self' ? '' : 'none';
+        if (fileField) fileField.style.display = type === 'image' ? '' : 'none';
+      }
+      return;
+    }
+
+    // Submit form submission
+    const submitForm = e.target.closest('#orr-submit-form');
+    if (submitForm && e.target.type === 'submit') {
+      e.preventDefault();
+      const title = submitForm.querySelector('#submit-title').value.trim();
+      if (!title) { alert('Please enter a title.'); return; }
+      const type = submitForm.querySelector('#submit-type').value;
+      const subreddit = submitForm.querySelector('input[name="sr"]').value;
+      if (!subreddit) { alert('Please select a subreddit.'); return; }
+      // For now, redirect to Reddit's own submit page with the data pre-filled
+      // (file uploads require multipart/form-data which is complex without a server)
+      const submitUrl = new URL(`https://www.reddit.com/r/${subreddit}/submit`);
+      submitUrl.searchParams.set('title', title);
+      submitUrl.searchParams.set('type', type);
+      if (type === 'link') {
+        const url = submitForm.querySelector('#submit-url').value.trim();
+        if (!url) { alert('Please enter a URL.'); return; }
+        submitUrl.searchParams.set('url', url);
+      } else if (type === 'self') {
+        const text = submitForm.querySelector('#submit-text').value.trim();
+        if (!text) { alert('Please enter some text.'); return; }
+        submitUrl.searchParams.set('text', text);
+      }
+      window.location.href = submitUrl.toString();
+      return;
+    }
+
     const more = e.target.closest('.morecomments a');
     if (more) {
       e.preventDefault();
@@ -384,7 +581,7 @@
         return;
       }
 
-      more.textContent = 'loading\u2026';
+      more.textContent = 'loading...';
       try {
         // Reddit's morechildren endpoint caps each request at ~100 ids.
         const CHUNK_SIZE = 100;
@@ -406,6 +603,13 @@
         stub.innerHTML = `<span class="morecomments-error">${ORR.escapeHtml(err.message)}</span>`;
       }
       return;
+    }
+  });
+
+  // Search filter change events (selects fire 'change', not 'click')
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'search-sort' || e.target.id === 'search-time') {
+      applySearchFilters();
     }
   });
 

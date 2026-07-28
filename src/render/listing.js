@@ -317,3 +317,83 @@ ORR.render.skeleton = function skeleton() {
     <p>loading old reddit\u2026</p>
   </div>`;
 };
+
+// ---- User sidebar (profile/about page) ----
+ORR.render.userSidebar = function userSidebar(profile) {
+  const { escapeHtml, formatScore } = ORR;
+  const d = profile && profile.data;
+
+  const username = d && d.name;
+  const avatar = d && d.icon_img;
+  const created = d && d.created_utc
+    ? new Date(d.created_utc * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+  const totalKarma = d && (d.link_karma || 0) + (d.comment_karma || 0);
+  const cakeDay = d && d.cake_day;
+
+  return `
+  <div class="side">
+    <div class="titlebox">
+      ${avatar ? `<img class="sr-icon" src="${avatar}" alt="" />` : ''}
+      <h1 class="redditname"><a href="/user/${escapeHtml(username || 'u')}">${escapeHtml(username || 'user')}</a></h1>
+      <p class="sr-tagline">${escapeHtml(d && d.public_description || '')}</p>
+      <div class="titlebox-stats">
+        <span class="total-karma"><span class="number">${formatScore(totalKarma)}</span> <span class="word">karma</span></span>
+        ${d && d.link_karma ? `<span class="link-karma"><span class="number">${formatScore(d.link_karma)}</span> <span class="word">posts</span></span>` : ''}
+        ${d && d.comment_karma ? `<span class="comment-karma"><span class="number">${formatScore(d.comment_karma)}</span> <span class="word">comments</span></span>` : ''}
+      </div>
+      ${created ? `<p class="user-created">Created ${created}</p>` : ''}
+      ${cakeDay ? `<p class="user-cake"><span class="cake-icon">\uD83C\uDF82</span> Cake day: ${cakeDay}</p>` : ''}
+      <ul class="user-nav">
+        <li><a href="/user/${escapeHtml(username || '')}">overview</a></li>
+        <li><a href="/user/${escapeHtml(username || '')}/submitted">submitted</a></li>
+        <li><a href="/user/${escapeHtml(username || '')}/comments">comments</a></li>
+        <li><a href="/user/${escapeHtml(username || '')}/upvoted">upvoted</a></li>
+        <li><a href="/user/${escapeHtml(username || '')}/downvoted">downvoted</a></li>
+        <li><a href="/user/${escapeHtml(username || '')}/saved">saved</a></li>
+        <li><a href="/user/${escapeHtml(username || '')}/about">about</a></li>
+      </ul>
+    </div>
+  </div>`;
+};
+
+// ---- Post submission page ----
+ORR.render.submitPage = function submitPage(subreddit, headerHtml) {
+  return `
+  ${headerHtml}
+  <div class="content-wrapper">
+    <div class="content" role="main">
+      <div class="submit-page">
+        <h1>Create a post${subreddit ? ` in r/${subreddit}` : ''}</h1>
+        <div class="submit-tabs">
+          <button class="submit-tab active" data-type="link">Link</button>
+          <button class="submit-tab" data-type="self">Text</button>
+          <button class="submit-tab" data-type="image">Image &amp; Video</button>
+        </div>
+        <form class="submit-form" id="orr-submit-form">
+          <input type="hidden" name="sr" value="${subreddit || ''}" />
+          <input type="hidden" name="type" value="link" id="submit-type" />
+          <div class="submit-field">
+            <label for="submit-title">Title</label>
+            <input type="text" id="submit-title" name="title" maxlength="300" placeholder="Title" required />
+          </div>
+          <div class="submit-field submit-url-field">
+            <label for="submit-url">URL</label>
+            <input type="url" id="submit-url" name="url" placeholder="https://" />
+          </div>
+          <div class="submit-field submit-text-field" style="display:none">
+            <label for="submit-text">Body</label>
+            <textarea id="submit-text" name="text" rows="8" placeholder="Text post body (Markdown supported)"></textarea>
+          </div>
+          <div class="submit-field submit-file-field" style="display:none">
+            <label for="submit-file">Image or Video</label>
+            <input type="file" id="submit-file" name="file" accept="image/*,video/*" />
+          </div>
+          <div class="submit-actions">
+            <button type="submit" class="submit-post-btn">Post</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>`;
+};
