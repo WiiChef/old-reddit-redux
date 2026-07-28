@@ -46,6 +46,32 @@ function renderModerators(mods) {
   </div>`;
 }
 
+// Render flair list/legend from subreddit's link_flair_types
+function renderFlairLegend(flairTypes) {
+  if (!flairTypes || !flairTypes.length) return '';
+  const items = flairTypes.slice(0, 15).map((f) => {
+    const bg = f.background_color || '';
+    const fg = f.text_color === 'dark' ? '#000000' : f.text_color === 'light' ? '#d7dadc' : '';
+    const style = bg ? `background:${bg};${fg ? 'color:' + fg + ';' : ''}` : '';
+    return `<li class="flair-legend-item">
+      <span class="flair-legend-preview" ${style ? `style="${style}"` : ''}>${f.text || ''}</span>
+      ${f.description ? `<span class="flair-legend-desc">${f.description}</span>` : ''}
+    </li>`;
+  }).join('');
+  return `<div class="flair-legend-section">
+    <h3>Post Flairs</h3>
+    <ul class="flair-legend-list">${items}</ul>
+  </div>`;
+}
+
+// Render sidebar footer links (Flair, Report, etc.)
+function renderSidebarFooter(subName) {
+  return `<div class="sidebar-footer">
+    <a href="/r/${subName}/about/flair" class="sidebar-footer-link">flair</a>
+    <a href="/r/${subName}/report" class="sidebar-footer-link">report</a>
+  </div>`;
+}
+
 // Render about community section
 function renderAbout(about) {
   if (!about || !about.data) return '';
@@ -60,7 +86,7 @@ function renderAbout(about) {
   </div>`;
 }
 
-ORR.render.sidebar = function sidebar(about, rules, moderators) {
+ORR.render.sidebar = function sidebar(about, rules, moderators, flairTypes) {
   if (!about || !about.data) return '';
   const d = about.data;
   const { escapeHtml, formatScore } = ORR;
@@ -90,6 +116,7 @@ ORR.render.sidebar = function sidebar(about, rules, moderators) {
     </div>
     ${renderRules(rules)}
     ${renderModerators(moderators)}
+    ${renderFlairLegend(flairTypes)}
     ${renderAbout(about)}
     <div class="sidebar-nav">
       <a href="/r/${escapeHtml(d.display_name)}/about">About</a>
@@ -97,5 +124,6 @@ ORR.render.sidebar = function sidebar(about, rules, moderators) {
       <a href="/r/${escapeHtml(d.display_name)}/search">Search</a>
       <a href="/r/${escapeHtml(d.display_name)}/random">Random post</a>
     </div>
+    ${renderSidebarFooter(d.display_name)}
   </div>`;
 };

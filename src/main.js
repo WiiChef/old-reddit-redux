@@ -42,15 +42,17 @@
         // Pass through time filter param (t=hour/day/week/month/year/all)
         const fetchQuery = { ...query };
         if (fetchQuery.t) fetchQuery.t = fetchQuery.t;
-        const [listing, about, rules, mods] = await Promise.all([
+        const [listing, about, rules, mods, flairs] = await Promise.all([
           ORR.api.fetchListing(`/r/${sub}/${sort}`, fetchQuery),
           ORR.api.fetchSubredditAbout(sub).catch(() => null),
           ORR.api.fetchSubredditRules(sub).catch(() => []),
           ORR.api.fetchSubredditMods(sub).catch(() => []),
+          ORR.api.fetchSubredditFlairs(sub).catch(() => []),
         ]);
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, sub, sort);
-        const sidebarHtml = ORR.render.sidebar(about, rules ? (rules.data || rules) : [], mods ? mods.data : []);
+        const flairTypes = (flairs && flairs.data) || (flairs && flairs.link_flair_types) || [];
+        const sidebarHtml = ORR.render.sidebar(about, rules ? (rules.data || rules) : [], mods ? mods.data : [], flairTypes);
         html = ORR.render.listing(listing, { headerHtml, sidebarHtml });
         listingAfter = listing.data.after;
         nextPageFetcher = (after) => ORR.api.fetchListing(`/r/${sub}/${sort}`, { ...fetchQuery, after });

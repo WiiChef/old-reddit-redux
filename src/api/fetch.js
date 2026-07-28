@@ -104,6 +104,10 @@ ORR.api.fetchSubredditMods = function fetchSubredditMods(subreddit) {
   return ORR.api.fetchListing(`/r/${subreddit}/about/moderators`);
 };
 
+ORR.api.fetchSubredditFlairs = function fetchSubredditFlairs(subreddit) {
+  return ORR.api.fetchListing(`/r/${subreddit}/about/flair/link`);
+};
+
 ORR.api.fetchUserProfile = function fetchUserProfile(username) {
   return ORR.api.fetchListing(`/user/${username}/about`);
 };
