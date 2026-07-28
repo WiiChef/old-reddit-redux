@@ -3,6 +3,7 @@
   const { qs, qsa, debounce, parseQuery } = ORR;
   let renderToken = 0; // guards against a stale async render clobbering a newer one
   let infiniteObserver = null; // current IntersectionObserver, one per mounted listing page
+  let currentUsername = ''; // cached from identity, used by reply button outside handleRoute scope
 
   async function handleRoute() {
     const myToken = ++renderToken;
@@ -20,6 +21,7 @@
 
     try {
       const identity = await ORR.api.fetchIdentity().catch(() => null);
+      currentUsername = identity && identity.data && identity.data.name ? identity.data.name : '';
       const query = parseQuery(location.search);
 
       let html;
@@ -322,7 +324,7 @@
       const linkId = postThing ? postThing.dataset.fullname : '';
       const formHtml = `
         <div class="reply-form">
-          <textarea class="reply-textarea" placeholder="Reply as ${identity ? (identity.data && identity.data.name) || '' : 'guest'}..." rows="4"></textarea>
+          <textarea class="reply-textarea" placeholder="Reply as ${currentUsername || 'guest'}..." rows="4"></textarea>
           <div class="reply-actions">
             <button class="reply-submit-btn" data-parent="${parentFullname}" data-link-id="${linkId}">reply</button>
             <button class="reply-cancel-btn">cancel</button>
