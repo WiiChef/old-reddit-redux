@@ -214,12 +214,44 @@ function renderPostRow(child, rank) {
     : `<a class="thumbnail self" href="${d.permalink}"></a>`;
 
   const flair = d.link_flair_text
-    ? `<span class="linkflairlabel">${escapeHtml(d.link_flair_text)}</span>` : '';
+    ? `<span class="linkflairlabel" ${d.link_flair_background_color ? `style="background:${escapeHtml(d.link_flair_background_color)};${d.link_flair_text_color ? 'color:' + escapeHtml(d.link_flair_text_color) + ';' : ''}"` : ''}>${escapeHtml(d.link_flair_text)}</span>` : '';
+
+  // User flair on the author name
+  const userFlair = d.author_flair_css_class || d.author_flair_text
+    ? `<span class="userflairlabel" ${d.author_flair_background_color ? `style="background:${escapeHtml(d.author_flair_background_color)};${d.author_flair_text_color ? 'color:' + escapeHtml(d.author_flair_text_color) + ';' : ''}"` : ''}>${escapeHtml(d.author_flair_text || '')}</span>` : '';
+
+  // NSFW badge
+  const nsfwBadge = d.over_18 ? '<span class="nsfw-badge">NSFW</span>' : '';
+
+  // Crosspost indicator
+  const crosspostBadge = (d.is_crosspostable || (d.crosspost_parent_list && d.crosspost_parent_list.length))
+    ? `<span class="crosspost-badge">r/${escapeHtml(d.crosspost_parent_list && d.crosspost_parent_list[0] ? d.crosspost_parent_list[0].subreddit : d.subreddit)}</span>`
+    : '';
+
+  // Archived / Locked indicators
+  const statusClasses = [];
+  if (d.archived) statusClasses.push('archived');
+  if (d.locked) statusClasses.push('locked');
+  const statusHtml = statusClasses.map((c) => `<span class="post-status ${c}">${c}</span>`).join('');
+
+  // Award rendering (from all_awardings or awards field)
+  let awardsHtml = '';
+  if (d.all_awardings && d.all_awardings.length) {
+    awardsHtml = d.all_awardings.map((a) => {
+      const count = a.count || 1;
+      const name = a.name || 'award';
+      return `<span class="award" title="${escapeHtml(name)} (${count})" style="background:${a.icon_color || '#333'};${a.icon_color === 'gold' ? 'background:#b8860b;' : ''}"></span>`;
+    }).join('');
+  } else if (d.awards && d.awards.length) {
+    awardsHtml = d.awards.map((a) =>
+      `<span class="award" title="${escapeHtml(a.name)} (${a.count})"></span>`
+    ).join('');
+  }
 
   const expando = detectExpando(d);
 
   return `
-  <div class="thing id-${d.name} ${d.stickied ? 'stickied' : ''}" data-fullname="${d.name}" data-permalink="${d.permalink}">
+  <div class="thing id-${d.name} ${d.stickied ? 'stickied' : ''} ${statusClasses.join(' ')}" data-fullname="${d.name}" data-permalink="${d.permalink}">
     <span class="rank">${rank}</span>
     ${voteArrows(d)}
     ${thumb}
@@ -227,18 +259,24 @@ function renderPostRow(child, rank) {
       <p class="title">
         <a class="title" href="${d.is_self ? d.permalink : d.url}">${escapeHtml(d.title)}</a>
         ${flair}
+        ${nsfwBadge}
+        ${crosspostBadge}
+        ${statusHtml}
         <span class="domain">(<a href="/domain/${escapeHtml(d.domain)}">${escapeHtml(d.domain)}</a>)</span>
       </p>
       ${expandoButtonHtml(expando, d.name)}
       <p class="tagline">
         submitted ${timeAgo(d.created_utc)} by
         <a class="author" href="/user/${escapeHtml(d.author)}">${escapeHtml(d.author)}</a>
+        ${userFlair}
+        ${awardsHtml}
         to <a href="/r/${escapeHtml(d.subreddit)}">r/${escapeHtml(d.subreddit)}</a>
       </p>
       <ul class="flat-list buttons">
         <li class="first"><a href="${d.permalink}">${d.num_comments} comments</a></li>
         <li><a class="save-button" data-fullname="${d.name}" href="#">save</a></li>
         <li><a class="hide-button" data-fullname="${d.name}" href="#">hide</a></li>
+        <li><a href="${d.permalink}">share</a></li>
         <li><a href="${d.permalink}">permalink</a></li>
       </ul>
       ${expandoContainerHtml(expando, d)}

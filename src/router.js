@@ -8,11 +8,18 @@ ORR.router = ORR.router || {};
 
 const ROUTES = [
   { name: 'subreddit', pattern: /^\/r\/([\w-]+)\/?$/ },
-  { name: 'subreddit-sort', pattern: /^\/r\/([\w-]+)\/(hot|new|top|rising|controversial)\/?$/ },
+  { name: 'subreddit-sort', pattern: /^\/r\/([\w-]+)\/(hot|new|top|rising|controversial|best)\/?$/ },
   { name: 'post', pattern: /^\/r\/([\w-]+)\/comments\/(\w+)(?:\/[\w-]*)?\/?$/ },
   { name: 'user', pattern: /^\/user\/([\w-]+)\/?$/ },
-  { name: 'front', pattern: /^\/(hot|new|top|rising)?\/?$/ },
+  { name: 'user-comments', pattern: /^\/user\/([\w-]+)\/comments\/?$/ },
+  { name: 'user-submitted', pattern: /^\/user\/([\w-]+)\/submitted\/?$/ },
+  { name: 'user-upvoted', pattern: /^\/user\/([\w-]+)\/upvoted\/?$/ },
+  { name: 'user-downvoted', pattern: /^\/user\/([\w-]+)\/downvoted\/?$/ },
+  { name: 'user-saved', pattern: /^\/user\/([\w-]+)\/saved\/?$/ },
+  { name: 'front', pattern: /^\/(hot|new|top|rising|controversial|best)?\/?$/ },
   { name: 'search', pattern: /^\/(r\/[\w-]+\/)?search\/?$/ },
+  { name: 'domain', pattern: /^\/domain\/([\w.-]+)\/?$/ },
+  { name: 'random', pattern: /^\/(r\/[\w-]+\/)?(random|randall)\/?$/ },
 ];
 
 ORR.router.match = function match(pathname) {

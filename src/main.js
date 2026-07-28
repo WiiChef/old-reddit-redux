@@ -39,8 +39,11 @@
       } else if (match.name === 'subreddit' || match.name === 'subreddit-sort') {
         const sub = match.params[0];
         const sort = match.params[1] || query.sort || 'hot';
+        // Pass through time filter param (t=hour/day/week/month/year/all)
+        const fetchQuery = { ...query };
+        if (fetchQuery.t) fetchQuery.t = fetchQuery.t;
         const [listing, about] = await Promise.all([
-          ORR.api.fetchListing(`/r/${sub}/${sort}`, query),
+          ORR.api.fetchListing(`/r/${sub}/${sort}`, fetchQuery),
           ORR.api.fetchSubredditAbout(sub).catch(() => null),
         ]);
         if (myToken !== renderToken) return;
@@ -48,10 +51,19 @@
         const sidebarHtml = ORR.render.sidebar(about);
         html = ORR.render.listing(listing, { headerHtml, sidebarHtml });
         listingAfter = listing.data.after;
-        nextPageFetcher = (after) => ORR.api.fetchListing(`/r/${sub}/${sort}`, { ...query, after });
+        nextPageFetcher = (after) => ORR.api.fetchListing(`/r/${sub}/${sort}`, { ...fetchQuery, after });
       } else if (match.name === 'user') {
         const username = match.params[0];
         const listing = await ORR.api.fetchUser(username, query);
+        if (myToken !== renderToken) return;
+        const headerHtml = ORR.render.header(identity, null);
+        html = ORR.render.listing(listing, { headerHtml });
+        listingAfter = listing.data.after;
+        nextPageFetcher = (after) => ORR.api.fetchUser(username, { ...query, after });
+      } else if (match.name === 'user-comments' || match.name === 'user-submitted' || match.name === 'user-upvoted' || match.name === 'user-downvoted' || match.name === 'user-saved') {
+        const username = match.params[0];
+        const page = match.name.replace('user-', '');
+        const listing = await ORR.api.fetchUser(username, { ...query, sort: query.sort || 'new' });
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, null);
         html = ORR.render.listing(listing, { headerHtml });
@@ -73,16 +85,28 @@
         listingAfter = listing.data.after;
         nextPageFetcher = (after) =>
           ORR.api.fetchListing(searchPath, { q: query.q || '', ...searchParams, after });
+      } else if (match.name === 'domain') {
+        // /domain/example.com
+        const domain = match.params[0];
+        const listing = await ORR.api.fetchListing(`/domain/${domain}`, query);
+        if (myToken !== renderToken) return;
+        const headerHtml = ORR.render.header(identity, null);
+        html = ORR.render.listing(listing, { headerHtml });
+        listingAfter = listing.data.after;
+        nextPageFetcher = (after) => ORR.api.fetchListing(`/domain/${domain}`, { ...query, after });
       } else {
-        // front page, /hot, /new, /top, /rising
-        const sort = match.params[0] || 'hot';
+        // front page, /hot, /new, /top, /rising, /controversial, /best
+        const sort = (match.params[0] || 'hot');
         const path = sort === 'hot' ? '/' : `/${sort}`;
-        const listing = await ORR.api.fetchListing(path, query);
+        // Pass through time filter param (t=hour/day/week/month/year/all)
+        const fetchQuery = { ...query };
+        if (fetchQuery.t) fetchQuery.t = fetchQuery.t;
+        const listing = await ORR.api.fetchListing(path, fetchQuery);
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, null, sort);
         html = ORR.render.listing(listing, { headerHtml });
         listingAfter = listing.data.after;
-        nextPageFetcher = (after) => ORR.api.fetchListing(path, { ...query, after });
+        nextPageFetcher = (after) => ORR.api.fetchListing(path, { ...fetchQuery, after });
       }
 
       mount(html);
