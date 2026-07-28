@@ -4,6 +4,63 @@
   let renderToken = 0; // guards against a stale async render clobbering a newer one
   let infiniteObserver = null; // current IntersectionObserver, one per mounted listing page
   let currentUsername = ''; // cached from identity, used by reply button outside handleRoute scope
+  let currentSettings = null; // loaded from chrome.storage, updated via SETTINGS_APPLY
+
+  // Listen for settings changes from popup/options page
+  chrome.runtime.onMessage.addListener((message) => {
+    if (!message || message.type !== 'SETTINGS_APPLY') return;
+    currentSettings = message.settings;
+    applySettings(currentSettings);
+  });
+
+  // Apply settings to the current page
+  function applySettings(settings) {
+    if (!settings) return;
+    const root = document.getElementById('orr-root');
+    if (!root) return;
+
+    // Toggle extension on/off
+    if (!settings.enabled) {
+      document.documentElement.classList.remove('orr-active');
+      return;
+    }
+    document.documentElement.classList.add('orr-active');
+
+    // Theme
+    root.className = root.className.replace(/theme-\w+/g, '').trim();
+    root.classList.add(`theme-${settings.theme}`);
+
+    // Font size
+    root.className = root.className.replace(/font-size-\w+/g, '').trim();
+    root.classList.add(`font-size-${settings.fontSize}`);
+
+    // Compact mode
+    root.classList.toggle('compact-mode', !!settings.compactMode);
+
+    // Show/hide rank numbers
+    qsa('.thing .rank', root).forEach((el) => {
+      el.style.display = settings.showRank ? '' : 'none';
+    });
+
+    // Auto-expand media
+    if (settings.autoExpandMedia) {
+      qsa('.expando-button.collapsed', root).forEach((btn) => {
+        btn.click();
+      });
+    }
+
+    // Disable animations
+    if (settings.disableAnimations) {
+      root.classList.add('no-animations');
+    } else {
+      root.classList.remove('no-animations');
+    }
+
+    // Reload page if enabled was toggled on (to re-render)
+    if (settings._reload) {
+      location.reload();
+    }
+  }
 
   async function handleRoute() {
     const myToken = ++renderToken;
@@ -136,6 +193,7 @@
 
       mount(html);
       if (nextPageFetcher) setupInfiniteScroll(nextPageFetcher, listingAfter);
+      if (match.name === 'submit') initSubmitPage();
     } catch (err) {
       console.error('[Old Reddit Redux]', err, err && err.stack);
       if (myToken === renderToken) mountError(err);
@@ -245,6 +303,48 @@
       <p>${ORR.escapeHtml(err.message)}</p>
       <p><a href="${location.pathname}">reload</a></p>
     </div>`);
+  }
+
+  // Title character counter for submit page
+  function initTitleCounter() {
+    const titleInput = document.getElementById('submit-title');
+    const counter = document.getElementById('title-count');
+    if (!titleInput || !counter) return;
+    const update = () => { counter.textContent = `${titleInput.value.length} / 300`; };
+    titleInput.addEventListener('input', update);
+    update();
+  }
+
+  // Load post flair options for submit page
+  async function loadSubmitFlairs(subreddit) {
+    if (!subreddit) return;
+    const flairSelect = document.getElementById('submit-flair');
+    const flairField = document.querySelector('.submit-flair-field');
+    if (!flairSelect) return;
+    try {
+      const flairs = await ORR.api.fetchSubredditFlairs(subreddit).catch(() => null);
+      const types = (flairs && flairs.data) || (flairs && flairs.link_flair_types) || [];
+      if (types.length && flairField) {
+        flairField.style.display = '';
+        types.forEach((f) => {
+          const opt = document.createElement('option');
+          opt.value = f.text || '';
+          opt.textContent = f.text || '(blank)';
+          flairSelect.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      // Flair loading is optional, ignore errors
+    }
+  }
+
+  // Initialize submit page after render
+  function initSubmitPage() {
+    const form = document.getElementById('orr-submit-form');
+    if (!form) return;
+    initTitleCounter();
+    const subreddit = form.querySelector('input[name="sr"]').value;
+    if (subreddit) loadSubmitFlairs(subreddit);
   }
 
   // Search filter change handler
@@ -547,21 +647,47 @@
       const type = submitForm.querySelector('#submit-type').value;
       const subreddit = submitForm.querySelector('input[name="sr"]').value;
       if (!subreddit) { alert('Please select a subreddit.'); return; }
-      // For now, redirect to Reddit's own submit page with the data pre-filled
-      // (file uploads require multipart/form-data which is complex without a server)
-      const submitUrl = new URL(`https://www.reddit.com/r/${subreddit}/submit`);
-      submitUrl.searchParams.set('title', title);
-      submitUrl.searchParams.set('type', type);
-      if (type === 'link') {
-        const url = submitForm.querySelector('#submit-url').value.trim();
-        if (!url) { alert('Please enter a URL.'); return; }
-        submitUrl.searchParams.set('url', url);
-      } else if (type === 'self') {
-        const text = submitForm.querySelector('#submit-text').value.trim();
-        if (!text) { alert('Please enter some text.'); return; }
-        submitUrl.searchParams.set('text', text);
+
+      // Image uploads require multipart/form-data — redirect to Reddit for those
+      if (type === 'image') {
+        const fileInput = submitForm.querySelector('#submit-file');
+        if (!fileInput || !fileInput.files.length) { alert('Please select a file.'); return; }
+        const submitUrl = new URL(`https://www.reddit.com/r/${subreddit}/submit`);
+        submitUrl.searchParams.set('title', title);
+        submitUrl.searchParams.set('type', 'image');
+        window.location.href = submitUrl.toString();
+        return;
       }
-      window.location.href = submitUrl.toString();
+
+      // Text and link posts can use the API directly
+      const submitBtn = submitForm.querySelector('.submit-post-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'posting...';
+      try {
+        let url = '', text = '';
+        if (type === 'link') {
+          url = submitForm.querySelector('#submit-url').value.trim();
+          if (!url) { alert('Please enter a URL.'); return; }
+        } else if (type === 'self') {
+          text = submitForm.querySelector('#submit-text').value.trim();
+          if (!text) { alert('Please enter some text.'); return; }
+        }
+        const nsfw = submitForm.querySelector('#submit-nsfw').checked;
+        const spoiler = submitForm.querySelector('#submit-spoiler').checked;
+        const result = await ORR.actions.submit(subreddit, title, type, url, text, nsfw, spoiler);
+        // Navigate to the newly created post
+        const permalink = result && result.json && result.json.data && result.json.data.permalink;
+        if (permalink) {
+          window.location.href = `https://www.reddit.com${permalink}`;
+        } else {
+          window.location.href = `https://www.reddit.com/r/${subreddit}`;
+        }
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Post';
+      }
       return;
     }
 

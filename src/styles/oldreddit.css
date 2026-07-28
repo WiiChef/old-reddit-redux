@@ -346,10 +346,17 @@ html.orr-active body {
   background: #000000;
   border-bottom: 1px solid #1a1a1a;
   padding: 6px 8px;
+  transition: background 0.15s ease;
+}
+.thing:hover {
+  background: #0a0a0a;
 }
 .thing.stickied {
   background: #001a0d;
   border-left: 3px solid #2d6b3f;
+}
+.thing.stickied:hover {
+  background: #002412;
 }
 .thing.archived { opacity: 0.65; }
 .thing .rank {
@@ -375,15 +382,20 @@ html.orr-active body {
   border-right: 8px solid transparent;
 }
 .arrow.up { border-bottom: 10px solid #545452; }
-.arrow.up.upmod { border-bottom-color: #ff8b60; }
+.arrow.up.upmod { border-bottom-color: #46d160; } /* old.reddit green */
 .arrow.down { border-top: 10px solid #545452; }
-.arrow.down.downmod { border-top-color: #9494ff; }
+.arrow.down.downmod { border-top-color: #ff4500; } /* old.reddit red */
+.arrow:hover { opacity: 0.8; }
+.arrow:active { opacity: 0.6; }
 .score {
   font-size: 11px;
   font-weight: bold;
   margin: 3px 0;
   color: #d7dadc;
 }
+.score.unvoted { color: #d7dadc; }
+.score.upvoted { color: #46d160; }
+.score.downvoted { color: #ff4500; }
 
 /* ---- Thumbnail ---- */
 .thumbnail {
@@ -1212,6 +1224,65 @@ html.orr-active body {
   cursor: pointer;
 }
 .submit-post-btn:hover { background: #e03d00; }
+.submit-post-btn:disabled {
+  background: #4fbcff;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Title character counter */
+.title-count {
+  display: block;
+  font-size: 10px;
+  color: #818384;
+  margin-top: 2px;
+  text-align: right;
+}
+
+/* NSFW/Spoiler toggles */
+.submit-options {
+  display: flex;
+  gap: 16px;
+  margin: 10px 0;
+}
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #818384;
+  cursor: pointer;
+}
+.toggle-label input[type="checkbox"] {
+  accent-color: #ff4500;
+}
+
+/* Flair select */
+.submit-flair-field select {
+  width: 100%;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+  color: #d7dadc;
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+  font-family: Verdana, Geneva, Arial, sans-serif;
+}
+.submit-flair-field select:focus {
+  border-color: #4fbcff;
+}
+
+/* Action success indicator */
+.orr-action-success {
+  background: #0a0a0a;
+  border: 1px solid #0079D3;
+  color: #4fbcff;
+  padding: 6px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  margin-top: 8px;
+}
 
 /* ============================================================
    SEARCH FILTERS
@@ -1309,6 +1380,371 @@ html.orr-active body {
 }
 
 /* ============================================================
+   THEMES
+   ============================================================ */
+/* Light theme overrides */
+#orr-root.theme-light {
+  background: #eee;
+  color: #1a1a1a;
+}
+#orr-root.theme-light .submit-page,
+#orr-root.theme-light .thing,
+#orr-root.theme-light .titlebox {
+  background: #f6f7f8;
+  border-color: #ccc;
+  color: #1a1a1a;
+}
+#orr-root.theme-light .header-bar {
+  background: #0079D3;
+}
+#orr-root.theme-light .header-bar a {
+  color: #fff;
+}
+#orr-root.theme-light .submit-field input[type="text"],
+#orr-root.theme-light .submit-field input[type="url"],
+#orr-root.theme-light .submit-field textarea,
+#orr-root.theme-light .submit-field select {
+  background: #fff;
+  border-color: #ccc;
+  color: #1a1a1a;
+}
+#orr-root.theme-light a {
+  color: #0079D3;
+}
+#orr-root.theme-light .arrow { color: #ccc; }
+#orr-root.theme-light .arrow:hover { color: #0079D3; }
+
+/* High contrast theme overrides */
+#orr-root.theme-high-contrast {
+  background: #000;
+  color: #fff;
+}
+#orr-root.theme-high-contrast .submit-page,
+#orr-root.theme-high-contrast .thing,
+#orr-root.theme-high-contrast .titlebox {
+  border-color: #fff;
+}
+#orr-root.theme-high-contrast a {
+  color: #ffff00;
+}
+#orr-root.theme-high-contrast .arrow {
+  color: #fff;
+}
+
+/* ============================================================
+   FONT SIZES
+   ============================================================ */
+#orr-root.font-size-small {
+  font-size: 9px;
+}
+#orr-root.font-size-medium {
+  font-size: 10px;
+}
+#orr-root.font-size-large {
+  font-size: 12px;
+}
+
+/* ============================================================
+   COMPACT MODE
+   ============================================================ */
+.compact-mode .thing {
+  margin-bottom: 2px;
+}
+.compact-mode .submit-page {
+  padding: 8px;
+}
+.compact-mode .submit-field {
+  margin-bottom: 6px;
+}
+.compact-mode .comment {
+  margin: 4px 0;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ============================================================
+   COMMENT NESTING LINES
+   ============================================================ */
+.thing.comment {
+  border-left-color: #1a1a1a;
+  transition: border-left-color 0.15s ease;
+}
+.thing.comment:hover {
+  border-left-color: #333;
+}
+.thing.comment .child .thing.comment {
+  border-left-color: #151515;
+}
+.thing.comment .child .thing.comment .child .thing.comment {
+  border-left-color: #111;
+}
+.thing.comment .child .thing.comment .child .thing.comment .child .thing.comment {
+  border-left-color: #0d0d0d;
+}
+/* Alternate nesting depth colors for visual depth */
+.thing.comment:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* ============================================================
+   TOOLTIP STYLES
+   ============================================================ */
+[tooltip] {
+  position: relative;
+  cursor: help;
+}
+[tooltip]::after {
+  content: attr(tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: #d7dadc;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 100;
+  border: 1px solid #333;
+}
+[tooltip]:hover::after {
+  opacity: 1;
+}
+
+/* ============================================================
+   MODAL DIALOG STYLES
+   ============================================================ */
+.orr-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.orr-modal {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 4px;
+  padding: 16px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.orr-modal h2 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #d7dadc;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 8px;
+}
+.orr-modal p {
+  font-size: 12px;
+  color: #818384;
+  line-height: 1.5;
+}
+.orr-modal-close {
+  background: transparent;
+  border: 1px solid #1a1a1a;
+  color: #818384;
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  margin-top: 12px;
+}
+.orr-modal-close:hover {
+  border-color: #ff4500;
+  color: #ff4500;
+}
+.orr-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.orr-modal-actions button {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.orr-modal-actions .orr-modal-primary {
+  background: #ff4500;
+  color: #fff;
+  border: none;
+}
+.orr-modal-actions .orr-modal-primary:hover {
+  background: #e03d00;
+}
+.orr-modal-actions .orr-modal-secondary {
+  background: transparent;
+  color: #818384;
+  border: 1px solid #1a1a1a;
+}
+.orr-modal-actions .orr-modal-secondary:hover {
+  border-color: #818384;
+  color: #d7dadc;
+}
+
+/* ============================================================
+   FOCUS / ACTIVE STATES (Keyboard Navigation)
+   ============================================================ */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #4fbcff;
+  outline-offset: 2px;
+}
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Active states for clickable elements */
+a:active {
+  opacity: 0.7;
+}
+button:active {
+  transform: scale(0.98);
+}
+
+/* ============================================================
+   ERROR / EMPTY STATES
+   ============================================================ */
+.orr-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #ff6b6b;
+  text-align: center;
+}
+.orr-error-state .orr-error-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+.orr-error-state .orr-error-message {
+  font-size: 13px;
+  color: #818384;
+  margin-bottom: 8px;
+}
+.orr-error-state .orr-error-action {
+  color: #4fbcff;
+  font-size: 12px;
+  text-decoration: none;
+}
+.orr-error-state .orr-error-action:hover {
+  text-decoration: underline;
+}
+.orr-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #818384;
+  text-align: center;
+}
+.orr-empty-state .orr-empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+.orr-empty-state .orr-empty-message {
+  font-size: 13px;
+  color: #545452;
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+  html.orr-active body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 12pt;
+  }
+  #header,
+  .side,
+  .nav-buttons,
+  .orr-infinite-sentinel,
+  .flat-list.buttons,
+  .reply-form,
+  .comment-sort-menu,
+  .collapse-controls,
+  .share-button,
+  .report-button,
+  .save-button,
+  .hide-button,
+  .reply-button,
+  .arrow,
+  .midcol,
+  .expando-button,
+  .orr-modal-overlay {
+    display: none !important;
+  }
+  .thing {
+    page-break-inside: avoid;
+    border: none !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .thing a {
+    color: #000 !important;
+    text-decoration: underline;
+  }
+  .title a.title {
+    font-size: 14pt;
+    font-weight: bold;
+  }
+  .tagline {
+    color: #666 !important;
+  }
+  .comment .usertext-body {
+    color: #000 !important;
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+  .comment .child {
+    margin-left: 20px;
+    border-left: 1px solid #ccc;
+    padding-left: 8px;
+  }
+  .content-wrapper {
+    flex-direction: column !important;
+  }
+  .content {
+    width: 100% !important;
+  }
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 900px) {
@@ -1318,4 +1754,25 @@ html.orr-active body {
   #search input[type="text"] { width: 140px; }
   .create-buttons { display: none; }
   .submit-page { padding: 10px; }
+}
+
+@media (max-width: 600px) {
+  #orr-root { padding-left: 4px; }
+  .thing .rank { display: none; }
+  .thumbnail { width: 50px; height: 36px; }
+  .title { font-size: 12px; }
+  .comment .usertext-body { font-size: 12px; }
+  .thing.comment { padding-left: 4px; }
+  .thing.comment .child { margin-left: 8px; }
+  #header-bottom-left { padding: 2px 4px; }
+  #header-bottom-right { padding: 2px 4px; }
+  .submit-page { padding: 8px; }
+}
+
+@media (max-width: 400px) {
+  html.orr-active body { font-size: 9px; }
+  .title { font-size: 11px; }
+  .tagline { font-size: 10px; }
+  .comment .usertext-body { font-size: 11px; }
+  .thing.comment .child { margin-left: 4px; }
 }

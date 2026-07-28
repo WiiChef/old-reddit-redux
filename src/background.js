@@ -7,12 +7,45 @@
 // the browser's normal cookie jar for the domain (via host_permissions),
 // so authenticated requests keep working.
 
-chrome.runtime.onInstalled.addListener(() => {
+const DEFAULT_SETTINGS = {
+  enabled: true,
+  theme: 'dark',
+  fontSize: 'medium',
+  compactMode: false,
+  showRank: true,
+  autoExpandMedia: false,
+  disableAnimations: false,
+};
+
+chrome.runtime.onInstalled.addListener((details) => {
   console.log('[Old Reddit Redux] installed');
+  // Initialize settings on first install
+  if (details.reason === 'install') {
+    chrome.storage.local.set(DEFAULT_SETTINGS);
+  }
 });
 
+// Listen for settings changes from popup/options and broadcast to all tabs
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!message || message.type !== 'ORR_FETCH') return false;
+  if (!message) return false;
+
+  if (message.type === 'SETTINGS_CHANGED') {
+    // Broadcast to all content scripts so they can update
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, {
+            type: 'SETTINGS_APPLY',
+            settings: message.settings,
+          }).catch(() => {}); // tab may not have the content script loaded
+        }
+      });
+    });
+    sendResponse({ ok: true });
+    return false;
+  }
+
+  if (message.type === 'ORR_FETCH') return false;
 
   const { url, options } = message;
 

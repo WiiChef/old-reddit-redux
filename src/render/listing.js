@@ -376,6 +376,7 @@ ORR.render.submitPage = function submitPage(subreddit, headerHtml) {
           <div class="submit-field">
             <label for="submit-title">Title</label>
             <input type="text" id="submit-title" name="title" maxlength="300" placeholder="Title" required />
+            <span class="title-count" id="title-count">0 / 300</span>
           </div>
           <div class="submit-field submit-url-field">
             <label for="submit-url">URL</label>
@@ -388,6 +389,22 @@ ORR.render.submitPage = function submitPage(subreddit, headerHtml) {
           <div class="submit-field submit-file-field" style="display:none">
             <label for="submit-file">Image or Video</label>
             <input type="file" id="submit-file" name="file" accept="image/*,video/*" />
+          </div>
+          <div class="submit-options">
+            <label class="toggle-label">
+              <input type="checkbox" id="submit-nsfw" name="nsfw" />
+              <span>NSFW</span>
+            </label>
+            <label class="toggle-label">
+              <input type="checkbox" id="submit-spoiler" name="spoiler" />
+              <span>Spoiler</span>
+            </label>
+          </div>
+          <div class="submit-field submit-flair-field" style="display:none">
+            <label for="submit-flair">Post Flair</label>
+            <select id="submit-flair" name="flair">
+              <option value="">(none)</option>
+            </select>
           </div>
           <div class="submit-actions">
             <button type="submit" class="submit-post-btn">Post</button>

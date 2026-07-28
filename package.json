@@ -1,0 +1,16 @@
+{
+  "name": "old-reddit-redux",
+  "version": "0.1.1",
+  "description": "Recreates the old.reddit.com layout using data from reddit.com",
+  "private": true,
+  "scripts": {
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "test": "node test/runner.js",
+    "test:watch": "node test/runner.js --watch",
+    "check": "npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  }
+}
