@@ -92,6 +92,13 @@ ORR.api.fetchUser = function fetchUser(username, params = {}) {
   return ORR.api.fetchListing(`/user/${username}`, params);
 };
 
+ORR.api.fetchUserListing = function fetchUserListing(username, page, params = {}) {
+  const safePage = ['comments', 'submitted', 'upvoted', 'downvoted', 'saved'].includes(page)
+    ? `/${page}`
+    : '';
+  return ORR.api.fetchListing(`/user/${username}${safePage}`, params);
+};
+
 ORR.api.fetchSubredditAbout = function fetchSubredditAbout(subreddit) {
   return ORR.api.fetchListing(`/r/${subreddit}/about`);
 };

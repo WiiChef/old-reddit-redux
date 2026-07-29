@@ -129,23 +129,30 @@
         nextPageFetcher = (after) => ORR.api.fetchUser(username, { ...query, after });
       } else if (match.name === 'user') {
         const username = match.params[0];
-        const listing = await ORR.api.fetchUser(username, query);
+        const [listing, profile] = await Promise.all([
+          ORR.api.fetchUser(username, query),
+          ORR.api.fetchUserProfile(username).catch(() => null),
+        ]);
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, null);
-        const sidebarHtml = ORR.render.userSidebar(null);
+        const sidebarHtml = ORR.render.userSidebar(profile, username);
         html = ORR.render.listing(listing, { headerHtml, sidebarHtml, isUserPage: true });
         listingAfter = listing.data.after;
         nextPageFetcher = (after) => ORR.api.fetchUser(username, { ...query, after });
       } else if (match.name === 'user-comments' || match.name === 'user-submitted' || match.name === 'user-upvoted' || match.name === 'user-downvoted' || match.name === 'user-saved') {
         const username = match.params[0];
         const page = match.name.replace('user-', '');
-        const listing = await ORR.api.fetchUser(username, { ...query, sort: query.sort || 'new' });
+        const params = { ...query, sort: query.sort || 'new' };
+        const [listing, profile] = await Promise.all([
+          ORR.api.fetchUserListing(username, page, params),
+          ORR.api.fetchUserProfile(username).catch(() => null),
+        ]);
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, null);
-        const sidebarHtml = ORR.render.userSidebar(null);
+        const sidebarHtml = ORR.render.userSidebar(profile, username);
         html = ORR.render.listing(listing, { headerHtml, sidebarHtml, isUserPage: true });
         listingAfter = listing.data.after;
-        nextPageFetcher = (after) => ORR.api.fetchUser(username, { ...query, after });
+        nextPageFetcher = (after) => ORR.api.fetchUserListing(username, page, { ...params, after });
       } else if (match.name === 'search') {
         // match.params[0] is "r/<sub>/" when this is a subreddit-scoped
         // search (e.g. /r/pics/search) and undefined for sitewide search.

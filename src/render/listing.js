@@ -319,11 +319,11 @@ ORR.render.skeleton = function skeleton() {
 };
 
 // ---- User sidebar (profile/about page) ----
-ORR.render.userSidebar = function userSidebar(profile) {
+ORR.render.userSidebar = function userSidebar(profile, fallbackUsername = '') {
   const { escapeHtml, formatScore } = ORR;
   const d = profile && profile.data;
 
-  const username = d && d.name;
+  const username = (d && d.name) || fallbackUsername;
   const avatar = d && d.icon_img;
   const created = d && d.created_utc
     ? new Date(d.created_utc * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })

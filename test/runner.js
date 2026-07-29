@@ -121,6 +121,22 @@ try {
   // OK - router may reference DOM APIs
 }
 
+// Load API helpers (defines ORR.api)
+try {
+  delete require.cache[require.resolve('../src/api/fetch.js')];
+  require('../src/api/fetch.js');
+} catch (e) {
+  // OK - API helpers may reference browser APIs
+}
+
+// Load listing renderer (defines ORR.render.userSidebar)
+try {
+  delete require.cache[require.resolve('../src/render/listing.js')];
+  require('../src/render/listing.js');
+} catch (e) {
+  // OK - renderer may reference DOM APIs
+}
+
 // ---- Load test files ----
 async function runTests() {
   const testDir = path.join(__dirname);
