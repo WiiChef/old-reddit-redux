@@ -1857,3 +1857,167 @@ button:active {
   .comment .usertext-body { font-size: 11px; }
   .thing.comment .child { margin-left: 4px; }
 }
+
+/* ============================================================
+   CLASSIC OLD.REDDIT.COM DEFAULT
+   ============================================================
+   These rules intentionally mirror the pre-redesign desktop visual system:
+   a #cee3f8 masthead, compact white listing rows, #369 links, a 300px
+   sidebar, and Verdana's x-small metrics. The optional dark theme remains
+   available, but a fresh install renders the historical default. */
+html.orr-active body {
+  background: #fff;
+  color: #222;
+  font: normal x-small Verdana, Arial, Helvetica, sans-serif;
+}
+#orr-root.theme-classic {
+  width: auto;
+  max-width: none;
+  padding: 0;
+  background: #fff;
+  color: #222;
+}
+#orr-root.theme-classic a { color: #369; }
+#orr-root.theme-classic #header {
+  min-height: 49px;
+  background: #cee3f8;
+  border-bottom: 1px solid #5f99cf;
+}
+#orr-root.theme-classic #header-bottom-left {
+  display: flex;
+  min-height: 49px;
+  padding: 2px 5px;
+}
+#orr-root.theme-classic #header-bottom-right {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: block;
+  padding: 4px;
+  background: #eff7ff;
+  color: #444;
+}
+#orr-root.theme-classic #header-img {
+  width: 120px;
+  height: 40px;
+  margin: 2px 5px 3px 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #ff4500;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 27px;
+  font-weight: bold;
+  line-height: 40px;
+  letter-spacing: -2px;
+}
+#orr-root.theme-classic #sr-header-area { color: #222; font-size: 14px; }
+#orr-root.theme-classic #sr-header-area .current-sr a,
+#orr-root.theme-classic #user-panel,
+#orr-root.theme-classic #user-panel a { color: #444; }
+#orr-root.theme-classic #search { display: inline-flex; margin-left: 8px; }
+#orr-root.theme-classic #search input[type="text"] {
+  width: 200px;
+  padding: 2px 4px;
+  background: #fff;
+  border: 1px solid #369;
+  border-radius: 0;
+  color: #222;
+  font-size: 11px;
+}
+#orr-root.theme-classic #search button,
+#orr-root.theme-classic .create-buttons { display: none; }
+#orr-root.theme-classic .tabmenu-container { background: transparent; border: 0; }
+#orr-root.theme-classic .tabmenu { display: inline-block; margin: 5px 0 0; padding: 0; }
+#orr-root.theme-classic .tabmenu li { display: inline; margin: 0 3px; }
+#orr-root.theme-classic .tabmenu li a {
+  padding: 2px 6px 0;
+  border-radius: 0;
+  background: #eff7ff;
+  color: #369;
+  font-size: 11px;
+}
+#orr-root.theme-classic .tabmenu li.selected a {
+  color: orangered;
+  background: #fff;
+  border: 1px solid #5f99cf;
+  border-bottom-color: #fff;
+}
+#orr-root.theme-classic .content-wrapper {
+  display: block;
+  padding: 0;
+}
+#orr-root.theme-classic .content {
+  margin: 7px 315px 0 5px;
+  padding: 0;
+}
+#orr-root.theme-classic .side {
+  float: right;
+  width: 300px;
+  margin: 7px 5px 0;
+}
+#orr-root.theme-classic .thing {
+  display: flex;
+  gap: 0;
+  padding: 3px 0;
+  background: #fff;
+  border: 0;
+}
+#orr-root.theme-classic .thing:hover { background: transparent; }
+#orr-root.theme-classic .thing .rank { width: 22px; padding-top: 4px; color: #c6c6c6; font-size: 10px; }
+#orr-root.theme-classic .midcol { width: 15px; margin: 0 5px 0 7px; }
+#orr-root.theme-classic .arrow { border-left-width: 7px; border-right-width: 7px; }
+#orr-root.theme-classic .arrow.up { border-bottom: 14px solid #c6c6c6; }
+#orr-root.theme-classic .arrow.down { border-top: 14px solid #c6c6c6; }
+#orr-root.theme-classic .arrow.up.upmod { border-bottom-color: #ff8b60; }
+#orr-root.theme-classic .arrow.down.downmod { border-top-color: #9494ff; }
+#orr-root.theme-classic .score { margin: 0; color: #c6c6c6; font-size: 11px; }
+#orr-root.theme-classic .thumbnail { width: 70px; height: 50px; margin-right: 5px; border-radius: 0; background: #f0f0f0; }
+#orr-root.theme-classic .entry { overflow: hidden; }
+#orr-root.theme-classic .title { margin: 0; font-size: medium; line-height: normal; }
+#orr-root.theme-classic .title a.title { color: #0000ff; }
+#orr-root.theme-classic .title a.title:visited { color: #551a8b; }
+#orr-root.theme-classic .domain,
+#orr-root.theme-classic .domain a,
+#orr-root.theme-classic .tagline,
+#orr-root.theme-classic .buttons a { color: #888; font-size: x-small; }
+#orr-root.theme-classic .tagline { margin: 1px 0; line-height: normal; }
+#orr-root.theme-classic .tagline .author { color: #369; }
+#orr-root.theme-classic .buttons { display: block; margin: 1px 0 0; font-size: x-small; }
+#orr-root.theme-classic .buttons li { display: inline; margin-right: 5px; }
+#orr-root.theme-classic .titlebox,
+#orr-root.theme-classic .rules-section,
+#orr-root.theme-classic .mods-section,
+#orr-root.theme-classic .about-community {
+  padding: 0;
+  margin-top: 7px;
+  background: #fff;
+  border: 0;
+  border-radius: 0;
+  color: #222;
+}
+#orr-root.theme-classic .titlebox { margin-top: 0; }
+#orr-root.theme-classic .titlebox .redditname { font-size: 18px; font-weight: normal; }
+#orr-root.theme-classic .titlebox .redditname a,
+#orr-root.theme-classic .titlebox-stats .number { color: #369; }
+#orr-root.theme-classic .titlebox .sr-submit-link,
+#orr-root.theme-classic .orr-subscribe-btn {
+  border: 1px solid #c4dbf1;
+  border-radius: 0;
+  background: linear-gradient(#fff, #e4f2ff);
+  color: #369;
+  font-size: 12px;
+  text-transform: none;
+}
+#orr-root.theme-classic .thing.link .entry .usertext-body,
+#orr-root.theme-classic .thing.comment .usertext-body {
+  padding: 6px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  color: #222;
+  font-size: small;
+  line-height: 1.4;
+}
+#orr-root.theme-classic .commentarea { padding: 0; background: #fff; }
+#orr-root.theme-classic .thing.comment { padding: 3px 0 3px 8px; border-left: 1px solid #ddd; }
+#orr-root.theme-classic .thing.comment .midcol { width: 15px; }

@@ -302,6 +302,24 @@
       document.body.appendChild(root);
     }
     root.innerHTML = html;
+    if (currentSettings) applySettings(currentSettings);
+  }
+
+  async function loadSettings() {
+    const defaults = {
+      enabled: true,
+      theme: 'classic',
+      fontSize: 'medium',
+      compactMode: false,
+      showRank: true,
+      autoExpandMedia: false,
+      disableAnimations: false,
+    };
+    try {
+      currentSettings = { ...defaults, ...(await chrome.storage.local.get(defaults)) };
+    } catch {
+      currentSettings = defaults;
+    }
   }
 
   function mountError(err) {
@@ -751,7 +769,11 @@
   });
 
   window.addEventListener('orr:locationchange', debounce(handleRoute, 50));
-  window.addEventListener('DOMContentLoaded', handleRoute);
-  // In case the script runs after DOMContentLoaded already fired:
-  if (document.readyState !== 'loading') handleRoute();
+  loadSettings().finally(() => {
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', handleRoute, { once: true });
+    } else {
+      handleRoute();
+    }
+  });
 })();

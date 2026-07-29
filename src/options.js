@@ -2,7 +2,7 @@
 (function () {
   const DEFAULT_SETTINGS = {
     enabled: true,
-    theme: 'dark',
+    theme: 'classic',
     fontSize: 'medium',
     compactMode: false,
     showRank: true,
@@ -11,8 +11,8 @@
   };
 
   const THEMES = [
-    { value: 'dark', label: 'Dark (default)' },
-    { value: 'light', label: 'Light' },
+    { value: 'classic', label: 'Classic (default)' },
+    { value: 'dark', label: 'Dark' },
     { value: 'high-contrast', label: 'High Contrast' },
   ];
 
