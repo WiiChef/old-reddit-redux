@@ -2,7 +2,7 @@
 (function () {
   const DEFAULT_SETTINGS = {
     enabled: true,
-    theme: 'classic',
+    theme: 'dark',
     fontSize: 'medium',
     compactMode: false,
     showRank: true,

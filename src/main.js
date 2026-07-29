@@ -308,7 +308,7 @@
   async function loadSettings() {
     const defaults = {
       enabled: true,
-      theme: 'classic',
+      theme: 'dark',
       fontSize: 'medium',
       compactMode: false,
       showRank: true,
