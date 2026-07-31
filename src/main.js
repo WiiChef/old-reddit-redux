@@ -1,6 +1,16 @@
 // src/main.js
 (function () {
   const { qsa, debounce, parseQuery } = ORR;
+
+  // Mark the content-script <style> tag so renderMount doesn't strip it.
+  // Content-script CSS is injected at document_start as a bare <style> in
+  // <head> with no identifying attribute.  Tag it NOW (before renderMount
+  // runs and removes every style:not([data-orr])).
+  document.querySelectorAll('head style').forEach((s) => {
+    if (s.textContent.includes('#orr-root')) {
+      s.setAttribute('data-orr', '1');
+    }
+  });
   let renderToken = 0; // guards against a stale async render clobbering a newer one
   let infiniteObserver = null; // current IntersectionObserver, one per mounted listing page
   let currentUsername = ''; // cached from identity, used by reply button outside handleRoute scope
@@ -299,17 +309,21 @@
       document.documentElement.removeAttribute('style');
       document.body.removeAttribute('style');
 
-      // Remove Reddit's injected <style> tags from <head> — they contain
-      // rules (e.g. semi-transparent backgrounds, overlay backdrops) that
-      // leak through and dim our content even after we replace body.innerHTML.
-      document.querySelectorAll('head style:not([data-orr])').forEach((s) => s.remove());
-      document.querySelectorAll('head link[rel="stylesheet"]:not([data-orr])').forEach((l) => l.remove());
-
       document.body.innerHTML = '';
       root = document.createElement('div');
       root.id = 'orr-root';
       document.body.appendChild(root);
     }
+
+    // Remove Reddit's injected <style> tags from <head> on EVERY render.
+    // The SPA can re-inject styles during navigation (e.g. dark-theme CSS
+    // vars, subreddit theme overrides). If we don't strip them each time,
+    // they leak into #orr-root and override our hardcoded dark palette —
+    // e.g. comment text turning dark-on-dark. Only our own CSS carries
+    // data-orr and is preserved.
+    document.querySelectorAll('head style:not([data-orr])').forEach((s) => s.remove());
+    document.querySelectorAll('head link[rel="stylesheet"]:not([data-orr])').forEach((l) => l.remove());
+
     root.innerHTML = html;
     if (currentSettings) applySettings(currentSettings);
   }
