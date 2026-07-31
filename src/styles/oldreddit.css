@@ -5,6 +5,14 @@
    Rebuilt from scratch to match the layout and color conventions.
    Left-aligned like old.reddit.com. */
 
+/* ---- Unconditional flash prevention ----
+   Reddit's own app shell paints white before our JS can add .orr-active.
+   Force pure black on html/body from the very first paint so there is
+   zero white flash, even on slow connections. */
+html, body {
+  background: #000000 !important;
+}
+
 html.orr-active, html.orr-active body {
   width: 100% !important;
   max-width: none !important;
@@ -329,6 +337,8 @@ html.orr-active body {
   align-items: flex-start;
   gap: 24px;
   padding: 10px 12px 10px 0;
+  background: #000000;
+  min-height: 100vh;
 }
 .content-wrapper .content {
   flex: 1;

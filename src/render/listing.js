@@ -91,6 +91,16 @@ function detectExpando(d) {
       };
     }
   }
+  // Fallback: some posts carry a thumbnail URL but no preview.images data
+  // (e.g. link posts to domains that don't serve oEmbed). Show the
+  // thumbnail as a simple image expando so the post isn't blank.
+  if (d.thumbnail && d.thumbnail.startsWith('http')) {
+    return {
+      type: 'image',
+      defaultExpanded: false,
+      data: { url: d.thumbnail, width: 120, height: 120, permalink: d.permalink },
+    };
+  }
   return null;
 }
 
