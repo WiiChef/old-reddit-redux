@@ -4,6 +4,7 @@
   "description": "Recreates the old.reddit.com layout using data from reddit.com",
   "private": true,
   "scripts": {
+    "build:firefox": "node build-firefox.js",
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix",
     "test": "node test/runner.js",
