@@ -24,6 +24,65 @@ function detectExpando(d) {
   if (d.is_self) {
     return d.selftext ? { type: 'selftext', defaultExpanded: true } : null;
   }
+
+  // ---- media_metadata (Reddit's modern API format) ----
+  // This is the most reliable source. It exists on v.redd.it videos,
+  // i.redd.it images, galleries, and GIFs — even when preview.images is
+  // empty or omitted entirely. Each key is a media-ID; the .m field tells
+  // us the MIME type (image/*, video/*, etc.).
+  if (d.media_metadata) {
+    const entries = Object.values(d.media_metadata).filter(Boolean);
+    if (entries.length > 1) {
+      // Gallery: multiple media items
+      const items = entries
+        .filter((meta) => meta.m && meta.m.startsWith('image'))
+        .map((meta) => {
+          const src = meta.s && (meta.s.u || meta.s.gif);
+          return src ? { url: src } : null;
+        })
+        .filter(Boolean);
+      if (items.length) {
+        return { type: 'gallery', defaultExpanded: false, data: { items, permalink: d.permalink } };
+      }
+    } else if (entries.length === 1) {
+      const meta = entries[0];
+      const mime = meta.m || '';
+      // Video (v.redd.it, GIFs stored as video)
+      if (mime.startsWith('video')) {
+        const videoUrl = meta.s && (meta.s.gif || meta.s.u);
+        if (videoUrl) {
+          return {
+            type: 'video',
+            defaultExpanded: false,
+            data: {
+              fallbackUrl: videoUrl,
+              isGif: !!meta.s.gif,
+              width: meta.s && meta.s.x || 640,
+              height: meta.s && meta.s.y || 360,
+            },
+          };
+        }
+      }
+      // Image (i.redd.it)
+      if (mime.startsWith('image')) {
+        const src = meta.s && meta.s.u;
+        if (src) {
+          return {
+            type: 'image',
+            defaultExpanded: false,
+            data: {
+              url: src,
+              width: meta.s && meta.s.x || 640,
+              height: meta.s && meta.s.y || 360,
+              permalink: d.permalink,
+            },
+          };
+        }
+      }
+    }
+  }
+
+  // ---- Legacy paths (older API responses / fallbacks) ----
   if (d.is_video && d.media && d.media.reddit_video) {
     const rv = d.media.reddit_video;
     return {
@@ -225,8 +284,27 @@ ORR.render.buildExpandoContent = function buildExpandoContent(type, data) {
 function renderPostRow(child, rank) {
   const d = child.data;
   const { escapeHtml, timeAgo } = ORR;
-  const thumb = d.thumbnail && d.thumbnail.startsWith('http')
-    ? `<a class="thumbnail" href="${d.permalink}"><img src="${d.thumbnail}" /></a>`
+
+  // Resolve a thumbnail URL from multiple sources, in priority order:
+  // 1. media_metadata (modern API — works for v.redd.it, i.redd.it)
+  // 2. preview.images[0] (legacy API)
+  // 3. d.thumbnail if it's an actual HTTP URL
+  let thumbUrl = null;
+  if (d.media_metadata) {
+    const entries = Object.values(d.media_metadata).filter(Boolean);
+    const first = entries[0];
+    if (first && first.s && first.s.u) {
+      thumbUrl = first.s.u;
+    }
+  }
+  if (!thumbUrl && d.preview && d.preview.images && d.preview.images[0]) {
+    thumbUrl = d.preview.images[0].source && d.preview.images[0].source.url;
+  }
+  if (!thumbUrl && d.thumbnail && d.thumbnail.startsWith('http')) {
+    thumbUrl = d.thumbnail;
+  }
+  const thumb = thumbUrl
+    ? `<a class="thumbnail" href="${d.permalink}"><img src="${thumbUrl}" /></a>`
     : `<a class="thumbnail self" href="${d.permalink}"></a>`;
 
   const flair = d.link_flair_text
