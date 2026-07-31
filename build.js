@@ -176,13 +176,14 @@ function buildChromeCrx(version) {
   // Build the ZIP
   const zipData = createZipBuffer(entries);
 
-  // CRX3 header format:
+  // CRX3 header format (per Chromium src/components/crx_file/crx3_header.h):
   //   Magic: "Cr24" (4 bytes)
-  //   Encrypted key length (4 bytes LE, usually 0 for unencrypted)
-  //   RSA signature length (4 bytes LE)
-  //   RSA signature (variable)
-  //   Public key length (4 bytes LE)
+  //   Version: uint8 (must be 2)
+  //   Reserved: 3 bytes (zero)
+  //   Public key length: uint32 LE
+  //   Signature length: uint32 LE
   //   Public key (variable)
+  //   Signature (variable)
   //   ZIP data (variable)
 
   // Sign the SHA256 hash of the ZIP data
@@ -195,20 +196,20 @@ function buildChromeCrx(version) {
 
   // Build CRX3
   const magic = Buffer.from('Cr24', 'ascii');
-  const encKeyLen = Buffer.alloc(4);
-  encKeyLen.writeUInt32LE(0, 0); // no encryption
-  const sigLen = Buffer.alloc(4);
-  sigLen.writeUInt32LE(sigBuf.length, 0);
+  const verBuf = Buffer.alloc(4); // version byte + 3 reserved zeros
+  verBuf.writeUInt8(2, 0);
   const pubKeyLen = Buffer.alloc(4);
   pubKeyLen.writeUInt32LE(publicKey.length, 0);
+  const sigLen = Buffer.alloc(4);
+  sigLen.writeUInt32LE(sigBuf.length, 0);
 
   const crxData = Buffer.concat([
     magic,
-    encKeyLen,
-    sigLen,
-    sigBuf,
+    verBuf,
     pubKeyLen,
+    sigLen,
     publicKey,
+    sigBuf,
     zipData,
   ]);
 
