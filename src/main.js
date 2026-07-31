@@ -89,7 +89,7 @@
 
       if (match.name === 'post') {
         const [sub, id] = match.params;
-        const [postListing, commentListing, about, rules, mods, flairs] = await Promise.all([
+        const [[postListing, commentListing], about, rules, mods, flairs] = await Promise.all([
           ORR.api.fetchPostAndComments(`/r/${sub}/comments/${id}`),
           ORR.api.fetchSubredditAbout(sub).catch(() => null),
           ORR.api.fetchSubredditRules(sub).catch(() => []),
@@ -285,10 +285,10 @@
   }
 
   function renderSkeleton() {
-    mount(ORR.render.skeleton());
+    renderMount(ORR.render.skeleton());
   }
 
-  function mount(html) {
+  function renderMount(html) {
     let root = document.getElementById('orr-root');
     if (!root) {
       // Reddit's own app shell sets inline styles/attributes directly on
@@ -872,9 +872,6 @@
     cachedVisibleThings = null;
   }
 
-  // Called once per route change to invalidate the cache
-  const origMount = mount;
-
   function getVisibleThings() {
     if (!cachedVisibleThings) {
       cachedVisibleThings = Array.from(document.querySelectorAll('.thing')).filter(
@@ -887,7 +884,7 @@
   // Invalidate cache after mount (DOM changed)
   function mount(html) {
     invalidateThingsCache();
-    origMount(html);
+    renderMount(html);
   }
 
   function setFocusedThing(index) {
