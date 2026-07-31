@@ -257,7 +257,7 @@ function renderCollapseControls() {
     <a href="#" class="orr-expand-all" data-action="expand-all">[+] Expand all</a>`;
 }
 
-ORR.render.postPage = function postPage(postListing, commentListing, headerHtml) {
+ORR.render.postPage = function postPage(postListing, commentListing, headerHtml, sidebarHtml) {
   const post = postListing.data.children[0].data;
   const comments = commentListing.data.children.map(renderComment).join('');
   const query = ORR.parseQuery(location.search);
@@ -265,17 +265,20 @@ ORR.render.postPage = function postPage(postListing, commentListing, headerHtml)
 
   return `
   ${headerHtml}
-  <div class="content" role="main">
-    <div class="sitetable linklisting">${renderPostHeader(post)}</div>
-    <div class="commentarea" data-link-id="${post.name}">
-      <div class="menuarea">
-        <span class="comment-count">${commentListing.data.children.length} comments</span>
-        ${renderCommentSortControls(currentSort)}
-        <span class="collapse-controls">
-          ${renderCollapseControls()}
-        </span>
+  <div class="content-wrapper">
+    <div class="content" role="main">
+      <div class="sitetable linklisting">${renderPostHeader(post)}</div>
+      <div class="commentarea" data-link-id="${post.name}">
+        <div class="menuarea">
+          <span class="comment-count">${commentListing.data.children.length} comments</span>
+          ${renderCommentSortControls(currentSort)}
+          <span class="collapse-controls">
+            ${renderCollapseControls()}
+          </span>
+        </div>
+        <div class="sitetable nestedlisting">${comments}</div>
       </div>
-      <div class="sitetable nestedlisting">${comments}</div>
     </div>
+    ${sidebarHtml || ''}
   </div>`;
 };

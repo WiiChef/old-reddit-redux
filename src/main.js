@@ -89,12 +89,18 @@
 
       if (match.name === 'post') {
         const [sub, id] = match.params;
-        const [postListing, commentListing] = await ORR.api.fetchPostAndComments(
-          `/r/${sub}/comments/${id}`
-        );
+        const [postListing, commentListing, about, rules, mods, flairs] = await Promise.all([
+          ORR.api.fetchPostAndComments(`/r/${sub}/comments/${id}`),
+          ORR.api.fetchSubredditAbout(sub).catch(() => null),
+          ORR.api.fetchSubredditRules(sub).catch(() => []),
+          ORR.api.fetchSubredditMods(sub).catch(() => []),
+          ORR.api.fetchSubredditFlairs(sub).catch(() => []),
+        ]);
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, sub);
-        html = ORR.render.postPage(postListing, commentListing, headerHtml);
+        const flairTypes = (flairs && flairs.data) || (flairs && flairs.link_flair_types) || [];
+        const sidebarHtml = ORR.render.sidebar(about, rules ? (rules.data || rules) : [], mods ? mods.data : [], flairTypes);
+        html = ORR.render.postPage(postListing, commentListing, headerHtml, sidebarHtml);
       } else if (match.name === 'subreddit' || match.name === 'subreddit-sort') {
         const sub = match.params[0];
         const sort = match.params[1] || query.sort || 'hot';
