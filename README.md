@@ -4,6 +4,14 @@ Recreates the old.reddit.com layout using data pulled live from `www.reddit.com`
 own JSON endpoints. It never sends a request to old.reddit.com — it reskins
 the modern site's data in your browser.
 
+## Releases
+
+| Version | Date | Notes |
+|---------|------|-------|
+| **v0.2.0** | 2025-08-01 | Subreddit sidebar on post/comment pages; 94 tests |
+| v0.1.1 | 2025-07-31 | Audit fixes: router safety, API error handling |
+| v0.1.0 | 2025-07-31 | Initial release: classic layout, expandos, voting, infinite scroll |
+
 ## How it works
 
 1. A content script runs at `document_start` on `www.reddit.com`.
@@ -17,24 +25,52 @@ the modern site's data in your browser.
 5. Unmatched routes (chat, modmail, settings, etc.) are left alone — native
    reddit.com renders normally.
 
-## Install (unpacked, for local testing)
+## Install
 
-1. Open `chrome://extensions`.
-2. Enable **Developer mode** (top right).
-3. Click **Load unpacked** and select this folder.
-4. Visit `https://www.reddit.com/` — the classic layout should take over
+### From release zip (recommended)
+
+1. Download `old-reddit-redux-0.2.0.zip` from the
+   [latest release](https://github.com/WiiChef/old-reddit-redux/releases/latest).
+2. Open `chrome://extensions` (or your browser's extensions page).
+3. Enable **Developer mode** (top right).
+4. Click **Load unpacked** and select the extracted folder.
+5. Visit `https://www.reddit.com/` — the classic layout should take over
    automatically on supported routes.
 
-## Supported routes (v0.1)
+### From source (unpacked, for local testing)
+
+1. Clone or download this repository.
+2. Open `chrome://extensions`.
+3. Enable **Developer mode** (top right).
+4. Click **Load unpacked** and select this folder.
+5. Visit `https://www.reddit.com/` — the classic layout should take over
+   automatically on supported routes.
+
+## Supported routes (v0.2)
 
 - `/`, `/hot`, `/new`, `/top`, `/rising` — front page listings
 - `/r/<sub>`, `/r/<sub>/<sort>` — subreddit listings
-- `/r/<sub>/comments/<id>/...` — post + comment thread
+- `/r/<sub>/comments/<id>/...` — post + comment thread (with sidebar)
 - `/user/<name>` — user overview
 - `/search`, `/r/<sub>/search` — search results
 
 Everything else (chat, modmail, settings, mod tools, galleries/polls
 rendering) currently falls through to native reddit.com.
+
+## What's new in v0.2.0
+
+- **Subreddit sidebar on post/comment pages** — opening a post now shows
+  the full right-column sidebar (subreddit info, member/online counts,
+  description, rules, moderators, join/leave button, navigation links)
+  alongside the post and its comments, matching the layout of
+  old.reddit.com. Previously the sidebar only appeared on subreddit
+  listing pages.
+- **Parallel data fetching** — sidebar metadata (about, rules, mods, flairs)
+  is fetched in parallel with post/comment data via `Promise.all`, so there
+  is zero additional latency.
+- **94 automated tests** covering post page rendering, sidebar content,
+  subreddit sizes, comment counts, edge cases, and structural parity with
+  old.reddit.com layout.
 
 ## Working features
 
@@ -49,7 +85,9 @@ rendering) currently falls through to native reddit.com.
   dozens of videos at once; collapsing a video/iframe also stops it rather
   than just hiding it, so background audio doesn't linger
 - **Subreddit sidebar** (`.side`/`.titlebox`) — icon, subscriber/online counts,
-  description, and a working join/leave button via `/api/subscribe`
+  description, rules, moderators, flair legend, and a working join/leave
+  button via `/api/subscribe`. Shown on both listing pages and post/comment
+  threads.
 - **Infinite scroll** (RES-style) — front page, subreddit, user, and search
   listings auto-load the next page as you approach the bottom, appending
   rows in place rather than re-rendering the page; falls back to a classic
@@ -132,6 +170,13 @@ corrected directly.
   tagging, account switcher, filter by flair/domain. Ask if you want any of
   these added — this extension only covers what's listed above so far.
 
+## Testing
+
+```bash
+npm run check    # lint + run all tests
+npm test         # run 94 tests
+```
+
 ## File map
 
 ```
@@ -148,4 +193,11 @@ src/
   render/comments.js      post page + recursive comment tree
   styles/oldreddit.css    classic layout, recreated from scratch
 background.js            fetch proxy (avoids page CSP) + service worker
+test/
+  runner.js              minimal test framework + env mocks
+  test_post_page_sidebar.js  unit tests for post page sidebar
+  test_post_page_loop.js     looping verification (35 scenarios)
+  test_router.js           route matching tests
+  test_util.js             utility function tests
+  test_user_listings.js    user listing tests
 ```
