@@ -298,6 +298,13 @@
       // though our own CSS asked for something wider. Strip them here.
       document.documentElement.removeAttribute('style');
       document.body.removeAttribute('style');
+
+      // Remove Reddit's injected <style> tags from <head> — they contain
+      // rules (e.g. semi-transparent backgrounds, overlay backdrops) that
+      // leak through and dim our content even after we replace body.innerHTML.
+      document.querySelectorAll('head style:not([data-orr])').forEach((s) => s.remove());
+      document.querySelectorAll('head link[rel="stylesheet"]:not([data-orr])').forEach((l) => l.remove());
+
       document.body.innerHTML = '';
       root = document.createElement('div');
       root.id = 'orr-root';
