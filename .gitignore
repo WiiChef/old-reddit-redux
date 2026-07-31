@@ -3,3 +3,12 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Build output
+dist/
+
+# Node
+node_modules/
+
+# Analysis
+analysis/
