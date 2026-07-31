@@ -403,6 +403,7 @@ html.orr-active body {
 .arrow.down.downmod { border-top-color: #ff4500; } /* old.reddit red */
 .arrow:hover { opacity: 0.8; }
 .arrow:active { opacity: 0.6; }
+/* ---- Score spans (old Reddit uses three spans, only one visible) ---- */
 .score {
   font-size: 11px;
   font-weight: bold;
@@ -411,9 +412,17 @@ html.orr-active body {
   white-space: nowrap;
   line-height: 1;
 }
+.score.dislikes, .score.likes { display: none; }
+.thing.midcol-upvoted .score.dislikes, .thing.midcol-downvoted .score.likes { display: inline; }
+.thing.midcol-upvoted .score.dislikes, .thing.midcol-downvoted .score.likes { color: inherit; }
+.thing.midcol-upvoted .score.unvoted, .thing.midcol-downvoted .score.unvoted { display: none; }
 .score.unvoted { color: #d7dadc; }
 .score.upvoted { color: #46d160; }
 .score.downvoted { color: #ff4500; }
+
+/* ---- Hidden schema.org itemprop spans ---- */
+span[hidden] { display: none; }
+a[hidden] { display: none; }
 
 /* ---- Thumbnail ---- */
 .thumbnail {
@@ -767,7 +776,151 @@ html.orr-active body {
   font-size: 11px;
 }
 .morecomments a { color: #4fbcff; text-decoration: none; }
+.morecomments .gray { color: #818384; }
 .morecomments-error { color: #ff6b6b; }
+
+/* ============================================================
+   NEW OLD-RED-DIT STRUCTURE ELEMENTS
+   ============================================================ */
+
+/* Parent anchor <p> (invisible, used for ID targeting) */
+p.parent { display: none; }
+p.parent a { display: none; }
+
+/* Clearleft divs (old Reddit clearfix) */
+.clearleft { clear: both; }
+
+/* Report form container (hidden by default, shown on report click) */
+.reportform { display: none; }
+
+/* May-blank-within and md-container (old Reddit classes) */
+.may-blank-within { }
+.md-container { }
+
+/* The .md div inside usertext-body (markdown content wrapper) */
+.usertext-body .md {
+  /* Inherits from parent usertext-body styling */
+}
+
+/* Usertext form wrapper */
+form.usertext {
+  /* No extra styling, just structural */
+}
+form.usertext input[type="hidden"] {
+  display: none;
+}
+
+/* Live timestamp <time> element */
+time.live-timestamp {
+  color: #818384;
+  font-size: 11px;
+}
+
+/* Expand/collapse toggle [–] / [+] */
+a.expand {
+  color: #818384;
+  text-decoration: none;
+  font-size: 11px;
+  margin-right: 4px;
+}
+a.expand:hover {
+  text-decoration: underline;
+}
+
+/* Number of children link */
+a.numchildren {
+  color: #818384;
+  text-decoration: none;
+  font-size: 11px;
+  cursor: pointer;
+}
+a.numchildren:hover {
+  text-decoration: underline;
+}
+
+/* Login required / access required classes (structural) */
+.login-required { }
+.access-required { }
+
+/* Thing data attributes styling (no visual change, just structure) */
+.thing { }
+
+/* Noncollapsed class (structural) */
+.noncollapsed { }
+
+/* Morechildren thing styling */
+.thing.morechildren {
+  padding: 4px 0;
+}
+.thing.morechildren .button {
+  font-size: 11px;
+  color: #4fbcff;
+}
+
+/* Embed comment button */
+a.embed-comment {
+  color: #818384;
+}
+
+/* Bylink class (permalink, parent links) */
+a.bylink {
+  color: #818384;
+}
+
+/* Comment save button */
+.comment-save-button a {
+  color: #818384;
+}
+
+/* User attrs span (empty in most cases) */
+.userattrs { }
+
+/* Author may-blank class */
+a.author.may-blank { }
+
+/* First li in buttons */
+.buttons li.first { }
+
+/* SiteTable for child comments */
+.sitetable.listing { }
+
+/* Midcol unvoted class */
+.midcol.unvoted { }
+
+/* Entry unvoted class */
+.entry.unvoted { }
+
+/* Comment flair styling (already exists but ensure it works with new structure) */
+.comment-flair {
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 2px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* Comment awards styling */
+.comment-awards {
+  color: #818384;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+/* Stickied comment styling */
+.thing.comment.stickied-comment {
+  background: #0a1416;
+  border-left-color: #225d8f;
+}
+
+/* Archived comment styling */
+.thing.comment.archived .entry {
+  opacity: 0.6;
+}
+
+/* Locked comment styling */
+.thing.comment.locked .reply-button {
+  display: none;
+}
 
 /* ============================================================
    SKELETON / ERROR STATES

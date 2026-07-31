@@ -413,15 +413,45 @@
         // Comments keep their score in the tagline text, not the midcol,
         // so look it up via the enclosing .thing rather than .midcol.
         const thing = arrow.closest('.thing');
-        const scoreEl = thing && thing.querySelector('.score[data-score]');
-        if (scoreEl) {
-          const baseScore = Number(scoreEl.dataset.score);
-          const baseLikes = Number(scoreEl.dataset.likes || '0');
-          const newScore = baseScore - baseLikes + effectiveDir;
-          const suffix = scoreEl.dataset.suffix || '';
-          scoreEl.textContent = ORR.formatScore(newScore) + suffix;
-          scoreEl.dataset.likes = String(effectiveDir);
-          if (scoreEl.hasAttribute('title')) scoreEl.title = String(newScore);
+
+        // Handle the new three-span score structure (dislikes/unvoted/likes)
+        // The visible span is controlled by CSS based on midcol-upvoted/midcol-downvoted classes
+        const scoreUnvoted = thing && thing.querySelector('.score.unvoted');
+        const scoreLikes = thing && thing.querySelector('.score.likes');
+        const scoreDislikes = thing && thing.querySelector('.score.dislikes');
+
+        if (scoreUnvoted) {
+          const baseScore = Number(scoreUnvoted.title || scoreUnvoted.textContent);
+
+          // Update all three spans
+          scoreUnvoted.textContent = `${ORR.formatScore(baseScore)} points`;
+          scoreUnvoted.title = String(baseScore);
+
+          if (scoreLikes) {
+            scoreLikes.textContent = `${ORR.formatScore(baseScore + 1)} points`;
+            scoreLikes.title = String(baseScore + 1);
+          }
+          if (scoreDislikes) {
+            scoreDislikes.textContent = `${ORR.formatScore(Math.max(0, baseScore - 1))} points`;
+            scoreDislikes.title = String(Math.max(0, baseScore - 1));
+          }
+
+          // Toggle CSS classes to show/hide the right span
+          thing.classList.remove('midcol-upvoted', 'midcol-downvoted');
+          if (effectiveDir === 1) thing.classList.add('midcol-upvoted');
+          else if (effectiveDir === -1) thing.classList.add('midcol-downvoted');
+        } else {
+          // Fallback for old single-score structure
+          const scoreEl = thing && thing.querySelector('.score[data-score]');
+          if (scoreEl) {
+            const baseScore = Number(scoreEl.dataset.score);
+            const baseLikes = Number(scoreEl.dataset.likes || '0');
+            const newScore = baseScore - baseLikes + effectiveDir;
+            const suffix = scoreEl.dataset.suffix || '';
+            scoreEl.textContent = ORR.formatScore(newScore) + suffix;
+            scoreEl.dataset.likes = String(effectiveDir);
+            if (scoreEl.hasAttribute('title')) scoreEl.title = String(newScore);
+          }
         }
       } catch (err) {
         alert(err.message);
@@ -632,12 +662,16 @@
       return;
     }
 
-    const collapseToggle = e.target.closest('.collapse-toggle');
-    if (collapseToggle) {
+    // Collapse/expand toggle — old Reddit uses .expand and .numchildren
+    const expandToggle = e.target.closest('.expand, .numchildren');
+    if (expandToggle) {
       e.preventDefault();
-      const thing = collapseToggle.closest('.thing.comment');
+      const thing = expandToggle.closest('.thing.comment');
       thing.classList.toggle('collapsed');
-      collapseToggle.textContent = thing.classList.contains('collapsed') ? '[+]' : '[\u2013]';
+      const isCollapsed = thing.classList.contains('collapsed');
+      // Update the [–] / [+] expand link
+      const expandLink = thing && thing.querySelector('.expand');
+      if (expandLink) expandLink.textContent = isCollapsed ? '[+]' : '[\u2013]';
       return;
     }
 
@@ -648,7 +682,7 @@
       qsa('.thing.comment', document).forEach((c) => {
         if (!c.classList.contains('collapsed')) {
           c.classList.add('collapsed');
-          const toggle = c.querySelector('.collapse-toggle');
+          const toggle = c.querySelector('.expand');
           if (toggle) toggle.textContent = '[+]';
         }
       });
@@ -661,7 +695,7 @@
       qsa('.thing.comment', document).forEach((c) => {
         if (c.classList.contains('collapsed')) {
           c.classList.remove('collapsed');
-          const toggle = c.querySelector('.collapse-toggle');
+          const toggle = c.querySelector('.expand');
           if (toggle) toggle.textContent = '[\u2013]';
         }
       });

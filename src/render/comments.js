@@ -66,7 +66,60 @@ function renderUsertextBody(d) {
   if (!d.selftext) return '';
   const ta = document.createElement('textarea');
   ta.innerHTML = d.selftext_html || '';
-  return `<div class="usertext-body">${embedMedia(ta.value)}</div>`;
+  return `<div class="usertext-body may-blank-within md-container " itemprop="text">${embedMedia(ta.value)}</div>`;
+}
+
+// Build the ISO datetime string for <time> elements (matches old.reddit)
+function isoDatetime(createdUtc) {
+  if (!createdUtc) return '';
+  const d = new Date(createdUtc * 1000);
+  return d.toISOString().replace('.000Z', '+00:00');
+}
+
+// Build the title attribute for <time> (matches old.reddit format)
+function timeTitle(createdUtc) {
+  if (!createdUtc) return '';
+  const d = new Date(createdUtc * 1000);
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${days[d.getUTCDay()]} ${months[d.getUTCMonth()]} ${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')} ${d.getUTCFullYear()} UTC`;
+}
+
+// Build the three score spans (dislikes, unvoted, likes) — only one visible at a time
+function scoreSpans(score, _likes) {
+  const s = ORR.formatScore(score);
+  const title = score;
+  const dislikesScore = Math.max(0, score - 1);
+  const likesScore = score + 1;
+  return `<span class="score dislikes" title="${dislikesScore}">${ORR.formatScore(dislikesScore)} points</span><span class="score unvoted" title="${title}">${s} points</span><span class="score likes" title="${likesScore}">${ORR.formatScore(likesScore)} points</span>`;
+}
+
+// Build the hidden itemprop spans for schema.org markup (matches real old Reddit)
+function hiddenSchemaSpans(score, permalink) {
+  return `<span hidden="" itemprop="upvoteCount">${score}</span><span hidden="" itemprop="downvoteCount">0</span><a hidden="" itemprop="url" href="https://www.reddit.com${permalink}/">Answer Link</a>`;
+}
+
+// Build the usertext form wrapper (matches real old Reddit structure)
+function usertextForm(fullname, bodyHtml) {
+  // Generate a random form suffix (matches real old Reddit pattern like "h8x", "o7i", "wns")
+  const formSuffix = Math.random().toString(36).substring(2, 5);
+  return `<form action="#" class="usertext warn-on-unload" onsubmit="return post_form(this, 'editusertext')" id="form-${fullname}${formSuffix}"><input type="hidden" name="thing_id" value="${fullname}"><div class="usertext-body may-blank-within md-container " itemprop="text"><div class="md">${bodyHtml}</div></div></form>`;
+}
+
+// Build the buttons ul (matches real old Reddit structure)
+function commentButtons(d, isRoot) {
+  const { escapeHtml } = ORR;
+  const permalink = d.permalink || '';
+  const subreddit = d.subreddit || '';
+  const title = d.title || '';
+  const commentId = d.id || '';
+
+  return `<ul class="flat-list buttons"><li class="first"><a href="https://old.reddit.com${permalink}" data-event-action="permalink" class="bylink" rel="nofollow">permalink</a></li><li><a href="javascript:void(0)" data-comment="${permalink}" data-media="www.redditmedia.com" data-link="/r/${escapeHtml(subreddit)}/comments/${(d.link_id || '').replace('t3_', '') || ''}/${commentId}/" data-root="${isRoot ? 'true' : 'false'}" data-title="${escapeHtml(title)}" class="embed-comment">embed</a></li><li class="comment-save-button save-button login-required"><a href="javascript:void(0)">save</a></li>${!isRoot ? `<li><a href="#${commentId}" data-event-action="parent" class="bylink" rel="nofollow">parent</a></li>` : ''}<li class="report-button login-required"><a href="javascript:void(0)" class="reportbtn access-required" data-event-action="report">report</a></li><li class="reply-button login-required"><a class="access-required" href="javascript:void(0)" data-event-action="comment" onclick="return reply(this)">reply</a></li></ul><div class="reportform report-${d.name}"></div>`;
+}
+
+// Build the midcol arrows (matches real old Reddit structure)
+function midcolHtml(d) {
+  return `<div class="midcol unvoted"><div class="arrow up login-required access-required" data-event-action="upvote" data-fullname="${d.name}" data-dir="1" role="button" aria-label="upvote" tabindex="0"></div><div class="arrow down login-required access-required" data-event-action="downvote" data-fullname="${d.name}" data-dir="-1" role="button" aria-label="downvote" tabindex="0"></div></div>`;
 }
 
 function renderPostHeader(d) {
@@ -94,30 +147,35 @@ function renderPostHeader(d) {
     expandoButtonHtml = `<div class="expando-button ${expando.type} expanded" data-fullname="${d.name}"></div>`;
   }
 
+  const permalink = d.permalink || '';
+  const subreddit = d.subreddit || '';
+  const commentId = d.id || '';
+
   return `
-  <div class="thing id-${d.name} link" data-fullname="${d.name}">
-    <div class="midcol">
-      <div class="arrow up ${d.likes === true ? 'upmod' : ''}" data-fullname="${d.name}" data-dir="1"></div>
-      <div class="score" data-score="${d.score}" data-likes="${likesNum}">${ORR.formatScore(d.score)}</div>
-      <div class="arrow down ${d.likes === false ? 'downmod' : ''}" data-fullname="${d.name}" data-dir="-1"></div>
-    </div>
-    <div class="entry">
+  <div class=" thing id-${d.name} link " id="thing_${d.name}" onclick="click_thing(this)" data-fullname="${d.name}" data-type="link" data-gildings="0" data-subreddit="${escapeHtml(subreddit)}" data-subreddit-prefixed="r/${escapeHtml(subreddit)}" data-subreddit-fullname="${(d.subreddit_id || '').replace('t5_', 't5_')}" data-subreddit-type="public" data-author="${escapeHtml(d.author)}" data-author-fullname="${(d.author_fullname || '').replace('t2_', 't2_')}" data-replies="0" data-permalink="${permalink}">
+    <p class="parent"><a name="${commentId}"></a></p>
+    ${midcolHtml(d)}
+    <div class="entry unvoted">
+      <p class="tagline">
+        <a href="https://old.reddit.com/user/${escapeHtml(d.author)}" class="author may-blank">${escapeHtml(d.author)}</a>
+        <span class="userattrs"></span>
+        ${hiddenSchemaSpans(d.score, permalink)}
+        ${scoreSpans(d.score, likesNum)}
+        <time title="${timeTitle(d.created_utc)}" datetime="${isoDatetime(d.created_utc)}" class="live-timestamp">${timeAgo(d.created_utc)}</time>
+      </p>
       <p class="title">
-        <a class="title" href="${d.is_self ? d.permalink : d.url}">${escapeHtml(d.title)}</a>
-        <span class="domain">(${escapeHtml(d.domain)})</span>
+        <a class="title" href="${d.is_self ? permalink : d.url}">${escapeHtml(d.title)}</a>
+        <span class="domain">(${escapeHtml(d.domain || 'self.' + subreddit)})</span>
       </p>
       ${expandoButtonHtml}
-      <p class="tagline">
-        submitted ${timeAgo(d.created_utc)} by
-        <a class="author" href="/user/${escapeHtml(d.author)}">${escapeHtml(d.author)}</a>
-        to <a href="/r/${escapeHtml(d.subreddit)}">r/${escapeHtml(d.subreddit)}</a>
-      </p>
       ${expando ? `<div class="expando expando-expanded" data-fullname="${d.name}">${expandoInnerHtml}</div>` : ''}
+      ${commentButtons(d, true)}
     </div>
+    <div class="clearleft"></div>
   </div>`;
 }
 
-function renderComment(child) {
+function renderComment(child, isRoot = false) {
   if (child.kind === 'more') {
     const d = child.data;
     if (!d.count) return '';
@@ -127,9 +185,8 @@ function renderComment(child) {
     // element — because we use single-quotes around the attribute value and
     // the IDs themselves contain only alphanumeric chars + underscores, there
     // is no risk of HTML entity corruption here.
-    return `<div class="morecomments" data-parent-id="${d.parent_id}" data-children='${JSON.stringify(d.children)}'>
-      <a href="#">load more comments (${d.count})</a>
-    </div>`;
+    const countLabel = d.count === 1 ? '1 reply' : `${d.count} replies`;
+    return `<div class=" thing id-${d.name || 'more'} noncollapsed   morechildren " id="thing_${d.name || 'more'}" onclick="click_thing(this)" data-fullname="${d.name || 'more'}" data-type="morechildren" data-gildings="0"><p class="parent"></p><div class="entry unvoted"><p class="tagline"></p><span class="morecomments" data-parent-id="${d.parent_id}" data-children='${JSON.stringify(d.children || [])}'><a style="font-size: smaller; font-weight: bold" class="button" id="more_${d.name || 'more'}" href="javascript:void(0)" onclick="return morechildren(this, '${(d.parent_id || '').replace('t3_', '') || ''}', 'confidence', 'c1:${d.name || ''}', 'False')">load more comments<span class="gray">&nbsp;(${countLabel})</span></a></span><ul class="flat-list buttons"></ul><div class="reportform report-${d.name || 'more'}"></div></div><div class="child"></div><div class="clearleft"></div></div>`;
   }
   const d = child.data;
   const { escapeHtml, timeAgo } = ORR;
@@ -155,36 +212,21 @@ function renderComment(child) {
   const archivedClass = d.archived ? ' archived' : '';
   const lockedClass = d.locked ? ' locked' : '';
 
-  const replies = d.replies && d.replies.data
-    ? `<div class="child">${d.replies.data.children.map(renderComment).join('')}</div>`
+  // Children count for collapse toggle
+  const childCount = d.replies && d.replies.data ? d.replies.data.children.length : 0;
+  const childrenLabel = childCount === 1 ? '1 child' : `${childCount} children`;
+
+  // Schema markup for comments (Answer type)
+  const hasSchema = isRoot;
+
+  const replies = d.replies && d.replies.data && d.replies.data.children.length
+    ? `<div class="child"><div id="siteTable_${d.name}" class="sitetable listing">${d.replies.data.children.map((c) => renderComment(c, false)).join('')}</div></div>`
     : '';
 
+  const subreddit = d.subreddit || '';
+
   return `
-  <div class="thing comment id-${d.name}${stickiedClass}${archivedClass}${lockedClass}" data-fullname="${d.name}">
-    <div class="midcol">
-      <div class="arrow up ${d.likes === true ? 'upmod' : ''}" data-fullname="${d.name}" data-dir="1"></div>
-      <div class="arrow down ${d.likes === false ? 'downmod' : ''}" data-fullname="${d.name}" data-dir="-1"></div>
-    </div>
-    <div class="entry">
-      <p class="tagline">
-        <a class="author" href="/user/${escapeHtml(d.author)}">${escapeHtml(d.author)}</a>
-        ${commentFlair}
-        <span class="score" data-score="${d.score}" data-likes="${likesNum}" data-suffix=" points">${ORR.formatScore(d.score)} points</span>
-        ${awardCount}
-        <time>${timeAgo(d.created_utc)}</time>
-        <a href="#" class="collapse-toggle">[\u2013]</a>
-      </p>
-      <div class="usertext-body">${bodyHtml}</div>
-      <ul class="flat-list buttons">
-        <li><a href="#" class="comment-sort-link" data-sort="best">sort comments</a></li>
-        <li><a href="#" class="reply-button" data-fullname="${d.name}">reply</a></li>
-        <li><a href="#" class="share-button" data-permalink="${d.permalink}">share</a></li>
-        <li><a href="#" class="save-button" data-fullname="${d.name}">save</a></li>
-        <li><a href="#" class="report-button" data-fullname="${d.name}">report</a></li>
-      </ul>
-      ${replies}
-    </div>
-  </div>`;
+<div class=" thing id-${d.name} noncollapsed   comment ${stickiedClass}${archivedClass}${lockedClass}" id="thing_${d.name}" onclick="click_thing(this)" data-fullname="${d.name}" data-type="comment" data-gildings="0" data-subreddit="${escapeHtml(subreddit)}" data-subreddit-prefixed="r/${escapeHtml(subreddit)}" data-subreddit-fullname="${(d.subreddit_id || '').replace('t5_', 't5_')}" data-subreddit-type="public" data-author="${escapeHtml(d.author || '')}" data-author-fullname="${(d.author_fullname || '').replace('t2_', 't2_')}" data-replies="${childCount}" data-permalink="${d.permalink || ''}"${hasSchema ? ' itemprop="acceptedAnswer" itemscope="" itemtype="https://schema.org/Answer"' : ''}><p class="parent"><a name="${d.id || ''}"></a></p>${midcolHtml(d)}<div class="entry unvoted"><p class="tagline"><a href="javascript:void(0)" class="expand" onclick="return togglecomment(this)">[–]</a><a href="https://old.reddit.com/user/${escapeHtml(d.author || '')}" class="author may-blank id-t2_${(d.author_fullname || '').replace('t2_', '')}">${escapeHtml(d.author || '')}</a><span class="userattrs"></span>${commentFlair} ${hiddenSchemaSpans(d.score, d.permalink || '')}${scoreSpans(d.score, likesNum)} ${awardCount}<time title="${timeTitle(d.created_utc)}" datetime="${isoDatetime(d.created_utc)}" class="live-timestamp">${timeAgo(d.created_utc)}</time>&nbsp;${childCount > 0 ? `<a href="javascript:void(0)" class="numchildren" onclick="return togglecomment(this)">(${childrenLabel})</a>` : ''}</p>${usertextForm(d.name, bodyHtml)}${commentButtons(d, isRoot)}${replies}</div><div class="clearleft"></div></div>`;
 }
 // Exposed so main.js can render freshly-fetched "more comments" nodes with
 // the exact same markup/behavior as the initial comment tree.
@@ -259,7 +301,7 @@ function renderCollapseControls() {
 
 ORR.render.postPage = function postPage(postListing, commentListing, headerHtml, sidebarHtml) {
   const post = postListing.data.children[0].data;
-  const comments = commentListing.data.children.map(renderComment).join('');
+  const comments = commentListing.data.children.map((c) => renderComment(c, true)).join('');
   const query = ORR.parseQuery(location.search);
   const currentSort = query.sort || 'conf';
 
