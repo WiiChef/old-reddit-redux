@@ -7,6 +7,10 @@
 # Build output
 dist/
 
+# Chrome signing keys (keep these secret!)
+extension.key
+extension.pub
+
 # Node
 node_modules/
 

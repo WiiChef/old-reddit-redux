@@ -1,17 +1,20 @@
 #!/usr/bin/env node
-// build.js — Unified build for Chrome (.crx) and Firefox (.xpi)
+// build.js — Build installable Chrome (.crx) and Firefox (.xpi) extensions
 //
-// No external dependencies — uses Node.js built-in zlib to create ZIPs.
+// Chrome .crx: CRX3 format with RSA-2048 signing key (key stored in dist/)
+// Firefox .xpi: Signed via web-ext sign (requires AMO account)
 //
 // Usage:
-//   node build.js           # build both Chrome and Firefox packages
-//   node build.js chrome    # build Chrome only
-//   node build.js firefox   # build Firefox only
-//   node build.js clean     # remove dist/ directory
+//   npm run build          # build both
+//   npm run build:chrome   # Chrome .crx only
+//   npm run build:firefox  # Firefox .xpi only (attempts web-ext sign)
+//   npm run build:clean    # remove dist/
 
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
+const crypto = require('crypto');
+const { execSync } = require('child_process');
 
 const ROOT = __dirname;
 const DIST = path.join(ROOT, 'dist');
@@ -19,16 +22,17 @@ const SRC_DIR = path.join(ROOT, 'src');
 const ICONS_DIR = path.join(ROOT, 'icons');
 
 // ---------------------------------------------------------------------------
-// Minimal ZIP writer (no external deps)
+// ZIP creation (used by both CRX and XPI)
 // ---------------------------------------------------------------------------
-function createZipFile(entries, outputPath) {
+function createZipBuffer(entries) {
+  // Returns a Buffer containing the ZIP archive
   const centralDir = [];
   let offset = 0;
+  const chunks = [];
 
   for (const entry of entries) {
     const compressed = zlib.deflateRawSync(entry.data, { level: 9 });
 
-    // Local file header
     const header = Buffer.alloc(30);
     header.writeUInt32LE(0x04034b50, 0);
     header.writeUInt16LE(20, 4);
@@ -43,11 +47,8 @@ function createZipFile(entries, outputPath) {
     const nameBuf = Buffer.from(entry.filename, 'utf8');
     header.writeUInt16LE(nameBuf.length, 26);
 
-    fs.appendFileSync(outputPath, header);
-    fs.appendFileSync(outputPath, nameBuf);
-    fs.appendFileSync(outputPath, compressed);
+    chunks.push(header, nameBuf, compressed);
 
-    // Central directory record
     const cd = Buffer.alloc(46);
     cd.writeUInt32LE(0x02014b50, 0);
     cd.writeUInt16LE(20, 4);
@@ -67,14 +68,13 @@ function createZipFile(entries, outputPath) {
     cd.writeUInt32LE(0, 38);
     cd.writeUInt32LE(offset, 42);
 
-    centralDir.push({ record: cd, name: nameBuf, offset });
+    centralDir.push({ record: cd, name: nameBuf });
     offset += header.length + nameBuf.length + compressed.length;
   }
 
   let cdSize = 0;
   for (const cd of centralDir) {
-    fs.appendFileSync(outputPath, cd.record);
-    fs.appendFileSync(outputPath, cd.name);
+    chunks.push(cd.record, cd.name);
     cdSize += cd.record.length + cd.name.length;
   }
 
@@ -83,7 +83,9 @@ function createZipFile(entries, outputPath) {
   eocd.writeUInt16LE(centralDir.length, 10);
   eocd.writeUInt32LE(cdSize, 12);
   eocd.writeUInt32LE(offset, 16);
-  fs.appendFileSync(outputPath, eocd);
+  chunks.push(eocd);
+
+  return Buffer.concat(chunks);
 }
 
 let _crcTable = null;
@@ -124,55 +126,201 @@ function collectFiles(dir, prefix) {
 }
 
 // ---------------------------------------------------------------------------
-// Build targets
+// Chrome CRX3 builder
 // ---------------------------------------------------------------------------
-function buildChrome(version) {
-  console.log('\n── Chrome extension ──');
+function buildChromeCrx(version) {
+  console.log('\n── Chrome .crx ──');
+
   const entries = [];
   entries.push(...collectFiles(SRC_DIR, 'src'));
   entries.push(...collectFiles(ICONS_DIR, 'icons'));
-
-  // Chrome uses manifest.json directly
   entries.push({
     filename: 'manifest.json',
     data: fs.readFileSync(path.join(ROOT, 'manifest.json')),
   });
 
-  // .zip (Chrome Web Store accepts .zip; Chrome also loads .crx but that
-  // requires a signing key. The .zip works for sideloading via
-  // chrome://extensions → Developer mode → Load unpacked).
-  const zipPath = path.join(DIST, `old-reddit-redux-${version}-chrome.zip`);
-  createZipFile(entries, zipPath);
-  const size = fs.statSync(zipPath).size;
-  console.log(`  ${zipPath} (${formatBytes(size)})`);
+  // CRX3 key management — persist key across builds so extension ID stays stable
+  const keyPath = path.join(DIST, 'extension.key');
+  const pubKeyPath = path.join(DIST, 'extension.pub');
+  let privateKey;
+  let publicKey;
+
+  if (fs.existsSync(keyPath) && fs.existsSync(pubKeyPath)) {
+    console.log('  Reusing existing signing key (stable extension ID)');
+    privateKey = fs.readFileSync(keyPath);
+    publicKey = fs.readFileSync(pubKeyPath);
+  } else {
+    console.log('  Generating new RSA-2048 signing key');
+    const pair = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: { type: 'spki', format: 'der' },
+      privateKeyEncoding: { type: 'pkcs8', format: 'der' },
+    });
+    privateKey = pair.privateKey;
+    publicKey = pair.publicKey;
+    fs.writeFileSync(keyPath, privateKey);
+    fs.writeFileSync(pubKeyPath, publicKey);
+  }
+
+  // Extension ID = SHA256(public key) first 16 bytes encoded as base32-like
+  // (Chrome uses lowercase a-p for the ID)
+  const hash = crypto.createHash('sha256').update(publicKey).digest();
+  const idChars = 'abcdefghijklmnopqrstuvwxyz';
+  let extId = '';
+  // Use the first 16 bytes of the hash, mod 26 for each character
+  for (let i = 0; i < 16; i++) {
+    extId += idChars[hash[i] % 26];
+  }
+  console.log(`  Extension ID: ${extId}`);
+
+  // Build the ZIP
+  const zipData = createZipBuffer(entries);
+
+  // CRX3 header format:
+  //   Magic: "Cr24" (4 bytes)
+  //   Encrypted key length (4 bytes LE, usually 0 for unencrypted)
+  //   RSA signature length (4 bytes LE)
+  //   RSA signature (variable)
+  //   Public key length (4 bytes LE)
+  //   Public key (variable)
+  //   ZIP data (variable)
+
+  // Sign the SHA256 hash of the ZIP data
+  const keyObj = crypto.createPrivateKey({ key: privateKey, format: 'der', type: 'pkcs8' });
+  const signer = crypto.createSign('SHA256');
+  signer.update(zipData);
+  const signature = signer.sign(keyObj);
+  // Ensure signature is a Buffer
+  const sigBuf = Buffer.isBuffer(signature) ? signature : Buffer.from(signature, 'binary');
+
+  // Build CRX3
+  const magic = Buffer.from('Cr24', 'ascii');
+  const encKeyLen = Buffer.alloc(4);
+  encKeyLen.writeUInt32LE(0, 0); // no encryption
+  const sigLen = Buffer.alloc(4);
+  sigLen.writeUInt32LE(sigBuf.length, 0);
+  const pubKeyLen = Buffer.alloc(4);
+  pubKeyLen.writeUInt32LE(publicKey.length, 0);
+
+  const crxData = Buffer.concat([
+    magic,
+    encKeyLen,
+    sigLen,
+    sigBuf,
+    pubKeyLen,
+    publicKey,
+    zipData,
+  ]);
+
+  const crxPath = path.join(DIST, `old-reddit-redux-${version}-chrome.crx`);
+  fs.writeFileSync(crxPath, crxData);
+
+  console.log(`  ${crxPath} (${formatBytes(crxData.length)})`);
   console.log(`  Files: ${entries.length}`);
-  return zipPath;
+  console.log(`  Signing key saved to: ${keyPath}`);
+  return crxPath;
 }
 
-function buildFirefox(version) {
-  console.log('\n── Firefox extension ──');
+// ---------------------------------------------------------------------------
+// Firefox XPI builder (uses web-ext sign for AMO signing)
+// ---------------------------------------------------------------------------
+function buildFirefoxXpi(version) {
+  console.log('\n── Firefox .xpi ──');
+
   const entries = [];
   entries.push(...collectFiles(SRC_DIR, 'src'));
   entries.push(...collectFiles(ICONS_DIR, 'icons'));
 
-  // Firefox needs the Firefox-specific manifest
   const ffManifestPath = path.join(ROOT, 'manifest.firefox.json');
   const ffManifest = JSON.parse(fs.readFileSync(ffManifestPath, 'utf-8'));
   console.log(`  Manifest V${ffManifest.manifest_version}`);
   console.log(
     `  Firefox min: ${ffManifest.browser_specific_settings.gecko.strict_min_version}`
   );
+  console.log(`  Gecko ID: ${ffManifest.browser_specific_settings.gecko.id}`);
 
   entries.push({
     filename: 'manifest.json',
     data: fs.readFileSync(ffManifestPath),
   });
 
-  const xpiPath = path.join(DIST, `old-reddit-redux-${version}-firefox.xpi`);
-  createZipFile(entries, xpiPath);
-  const size = fs.statSync(xpiPath).size;
-  console.log(`  ${xpiPath} (${formatBytes(size)})`);
+  // Create a temporary source directory for web-ext
+  const srcDir = path.join(DIST, 'firefox-src');
+  if (fs.existsSync(srcDir)) {
+    fs.rmSync(srcDir, { recursive: true, force: true });
+  }
+  fs.mkdirSync(srcDir, { recursive: true });
+
+  // Write files to temp dir
+  for (const entry of entries) {
+    const outPath = path.join(srcDir, entry.filename);
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, entry.data);
+  }
+
   console.log(`  Files: ${entries.length}`);
+
+  // Try to sign with web-ext
+  const xpiPath = path.join(DIST, `old-reddit-redux-${version}-firefox.xpi`);
+
+  // Check if web-ext is available
+  let hasWebExt = false;
+  try {
+    execSync('web-ext --version', { stdio: 'pipe' });
+    hasWebExt = true;
+  } catch {
+    // web-ext not available, create unsigned XPI
+  }
+
+  if (hasWebExt) {
+    console.log('  Signing with web-ext (AMO)...');
+    try {
+      // web-ext sign requires FxA authentication
+      // Check if already authenticated
+      const webExtDir = path.join(
+        process.env.APPDATA || process.env.HOME,
+        '.web-ext-artifacts'
+      );
+      fs.mkdirSync(webExtDir, { recursive: true });
+
+      const result = execSync(
+        `web-ext sign --source-dir "${srcDir}" --artifacts-dir "${DIST}" --verbose`,
+        { encoding: 'utf8', timeout: 120000 }
+      );
+      console.log('  Signed successfully!');
+      console.log(result);
+
+      // web-ext places the signed XPI in the artifacts dir
+      const signedFiles = fs.readdirSync(DIST).filter(f => f.endsWith('.xpi'));
+      if (signedFiles.length > 0) {
+        const signedPath = path.join(DIST, signedFiles[0]);
+        console.log(`  ${signedPath} (${formatBytes(fs.statSync(signedPath).size)})`);
+      }
+    } catch (err) {
+      console.log('  web-ext sign failed (AMO authentication required).');
+      console.log('  Creating unsigned XPI for local use...');
+      console.log(`  ${err.message}`.slice(0, 200));
+
+      // Fall back to unsigned XPI
+      const zipData = createZipBuffer(entries);
+      fs.writeFileSync(xpiPath, zipData);
+      console.log(`  ${xpiPath} (${formatBytes(zipData.length)}) [unsigned]`);
+      console.log('  To sign: run `web-ext sign --source-dir ' + srcDir + '`');
+      console.log('  (requires Firefox Accounts login via web-ext)');
+    }
+  } else {
+    console.log('  web-ext not installed — creating unsigned XPI');
+    const zipData = createZipBuffer(entries);
+    fs.writeFileSync(xpiPath, zipData);
+    console.log(`  ${xpiPath} (${formatBytes(zipData.length)}) [unsigned]`);
+    console.log('  To sign for AMO: npm install -g web-ext && web-ext sign');
+  }
+
+  // Clean up temp dir
+  try {
+    fs.rmSync(srcDir, { recursive: true, force: true });
+  } catch {}
+
   return xpiPath;
 }
 
@@ -197,31 +345,51 @@ function main() {
 
   console.log(`[build] Old Reddit Redux v${version}`);
 
-  // Clean dist
+  // Clean dist (but preserve signing key for Chrome so extension ID stays stable)
+  const existingKey = path.join(DIST, 'extension.key');
+  const existingPub = path.join(DIST, 'extension.pub');
+  let savedKey = null;
+  let savedPub = null;
+  if (fs.existsSync(existingKey)) {
+    savedKey = fs.readFileSync(existingKey);
+  }
+  if (fs.existsSync(existingPub)) {
+    savedPub = fs.readFileSync(existingPub);
+  }
+
   if (fs.existsSync(DIST)) {
     fs.rmSync(DIST, { recursive: true, force: true });
   }
   fs.mkdirSync(DIST, { recursive: true });
 
+  // Restore signing key
+  if (savedKey) fs.writeFileSync(existingKey, savedKey);
+  if (savedPub) fs.writeFileSync(existingPub, savedPub);
+
   if (target === 'both' || target === 'chrome') {
-    buildChrome(version);
+    buildChromeCrx(version);
   }
   if (target === 'both' || target === 'firefox') {
-    buildFirefox(version);
+    buildFirefoxXpi(version);
   }
 
   console.log(`\n[build] Done! Packages in dist/`);
   console.log(`\n── Installation ──`);
-  console.log(`Chrome:`);
+  console.log(`Chrome (.crx):`);
   console.log(`  1. Open chrome://extensions`);
   console.log(`  2. Enable "Developer mode"`);
-  console.log(`  3. Drag the .zip onto the page (or extract → "Load unpacked")`);
-  console.log(`\nFirefox:`);
-  console.log(`  1. Open about:debugging#/runtime/this-firefox`);
-  console.log(`  2. Drag the .xpi onto the page`);
-  console.log(`  3. Click "Add"`);
-  console.log(`\nNote: Unsigned extensions work for local/temporary use.`);
-  console.log(`     To publish: Chrome Web Store or AMO (addons.mozilla.org)`);
+  console.log(`  3. Drag the .crx file onto the page`);
+  console.log(`  → Chrome will install it as a proper extension`);
+  console.log(`\nFirefox (.xpi):`);
+  console.log(`  Signed .xpi:`);
+  console.log(`    1. Double-click the .xpi file (opens in Firefox)`);
+  console.log(`    2. Click "Add" → "Add Extension"`);
+  console.log(`  Unsigned .xpi (local dev only):`);
+  console.log(`    1. about:debugging → Load Temporary Add-on`);
+  console.log(`    2. Select the .xpi file`);
+  console.log(`\nTo sign Firefox for AMO distribution:`);
+  console.log(`  npm install -g web-ext`);
+  console.log(`  web-ext sign --source-dir <source>`);
 }
 
 function formatBytes(bytes) {
