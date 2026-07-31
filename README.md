@@ -8,7 +8,8 @@ the modern site's data in your browser.
 
 | Version | Date | Notes |
 |---------|------|-------|
-| **v0.2.0** | 2025-08-01 | Subreddit sidebar on post/comment pages; 94 tests |
+| **v0.3.0** | 2025-08-01 | Unpacked ZIP distribution; removed CRX signing |
+| v0.2.0 | 2025-08-01 | Subreddit sidebar on post/comment pages; 94 tests |
 | v0.1.1 | 2025-07-31 | Audit fixes: router safety, API error handling |
 | v0.1.0 | 2025-07-31 | Initial release: classic layout, expandos, voting, infinite scroll |
 
@@ -29,7 +30,7 @@ the modern site's data in your browser.
 
 ### From release zip (recommended)
 
-1. Download `old-reddit-redux-0.2.0.zip` from the
+1. Download `old-reddit-redux-0.3.0.zip` from the
    [latest release](https://github.com/WiiChef/old-reddit-redux/releases/latest).
 2. Open `chrome://extensions` (or your browser's extensions page).
 3. Enable **Developer mode** (top right).
