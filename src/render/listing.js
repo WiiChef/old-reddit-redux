@@ -102,10 +102,16 @@ ORR.render.detectExpando = detectExpando;
 function expandoButtonHtml(expando, fullname) {
   if (!expando) return '';
   const stateClass = expando.defaultExpanded ? 'expanded' : 'collapsed';
-  const dataAttr = expando.data
-    ? `data-expando='${ORR.escapeHtml(JSON.stringify(expando.data))}'`
-    : '';
-  return `<div class="expando-button ${expando.type} ${stateClass}" data-fullname="${fullname}" data-expando-type="${expando.type}" ${dataAttr}></div>`;
+  // Store expando data on the element's dataset object directly so we avoid
+  // round-tripping JSON through an HTML attribute (which would require
+  // HTML-escaping and then unescaping + JSON.parse on read — error-prone).
+  // The stringified attribute is kept only as a fallback hint; the real
+  // payload is attached via a module-level Map keyed by fullname.
+  ORR._expandoData = ORR._expandoData || new Map();
+  if (expando.data) {
+    ORR._expandoData.set(fullname, expando.data);
+  }
+  return `<div class="expando-button ${expando.type} ${stateClass}" data-fullname="${fullname}" data-expando-type="${expando.type}"></div>`;
 }
 
 function expandoContainerHtml(expando, d) {

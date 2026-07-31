@@ -533,6 +533,111 @@
       return;
     }
 
+    // Share button modal/popover
+    const shareBtn = e.target.closest('.share-button, .buttons a:not([class]):nth-child(4)');
+    if (shareBtn && shareBtn.textContent === 'share') {
+      e.preventDefault();
+      const thing = shareBtn.closest('.thing');
+      const permalink = shareBtn.dataset.permalink || (thing && thing.dataset.permalink) || '';
+      const fullUrl = permalink.startsWith('http') ? permalink : `https://www.reddit.com${permalink}`;
+      // Extract post ID for redd.it shortlink
+      const idMatch = permalink.match(/\/comments\/(\w+)/);
+      const shortUrl = idMatch ? `https://redd.it/${idMatch[1]}` : fullUrl;
+
+      let modal = document.getElementById('orr-share-modal');
+      if (modal) modal.remove();
+      modal = document.createElement('div');
+      modal.id = 'orr-share-modal';
+      modal.className = 'orr-modal-overlay';
+      modal.innerHTML = `
+        <div class="orr-modal">
+          <div class="orr-modal-header">
+            <h2>Share Post / Link</h2>
+            <button class="orr-modal-close">&times;</button>
+          </div>
+          <div class="orr-modal-body">
+            <div class="orr-share-field">
+              <label>Permalink:</label>
+              <input type="text" readonly value="${ORR.escapeHtml(fullUrl)}" id="orr-share-url" />
+              <button id="orr-copy-permalink-btn">Copy</button>
+            </div>
+            ${idMatch ? `
+            <div class="orr-share-field" style="margin-top:10px">
+              <label>Shortlink:</label>
+              <input type="text" readonly value="${ORR.escapeHtml(shortUrl)}" id="orr-share-shorturl" />
+              <button id="orr-copy-shortlink-btn">Copy</button>
+            </div>` : ''}
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.querySelector('.orr-modal-close').addEventListener('click', () => modal.remove());
+      modal.addEventListener('click', (ev) => { if (ev.target === modal) modal.remove(); });
+      modal.querySelector('#orr-copy-permalink-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(fullUrl);
+        modal.querySelector('#orr-copy-permalink-btn').textContent = 'Copied!';
+      });
+      if (idMatch) {
+        modal.querySelector('#orr-copy-shortlink-btn').addEventListener('click', () => {
+          navigator.clipboard.writeText(shortUrl);
+          modal.querySelector('#orr-copy-shortlink-btn').textContent = 'Copied!';
+        });
+      }
+      return;
+    }
+
+    // Report button modal
+    const reportBtn = e.target.closest('.report-button');
+    if (reportBtn) {
+      e.preventDefault();
+      const fullname = reportBtn.dataset.fullname;
+      let modal = document.getElementById('orr-report-modal');
+      if (modal) modal.remove();
+      modal = document.createElement('div');
+      modal.id = 'orr-report-modal';
+      modal.className = 'orr-modal-overlay';
+      modal.innerHTML = `
+        <div class="orr-modal">
+          <div class="orr-modal-header">
+            <h2>Report Content</h2>
+            <button class="orr-modal-close">&times;</button>
+          </div>
+          <div class="orr-modal-body">
+            <label style="display:block;margin-bottom:6px;font-size:11px">Select a reason for reporting:</label>
+            <select id="orr-report-reason" style="width:100%;padding:6px;background:#0a0a0a;color:#d7dadc;border:1px solid #333;border-radius:3px">
+              <option value="spam">Spam</option>
+              <option value="harassment">Harassment or bullying</option>
+              <option value="hate">Hate speech</option>
+              <option value="violence">Violence or threats</option>
+              <option value="impersonation">Impersonation</option>
+              <option value="copyright">Copyright / IP infringement</option>
+              <option value="other">Other issue</option>
+            </select>
+            <div style="margin-top:12px;text-align:right">
+              <button id="orr-submit-report-btn" class="submit-post-btn" style="padding:4px 12px">Submit Report</button>
+            </div>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.querySelector('.orr-modal-close').addEventListener('click', () => modal.remove());
+      modal.addEventListener('click', (ev) => { if (ev.target === modal) modal.remove(); });
+      modal.querySelector('#orr-submit-report-btn').addEventListener('click', async () => {
+        const reason = modal.querySelector('#orr-report-reason').value;
+        const btn = modal.querySelector('#orr-submit-report-btn');
+        btn.disabled = true;
+        btn.textContent = 'submitting...';
+        try {
+          await ORR.actions.report(fullname, reason);
+          modal.remove();
+          alert('Report submitted. Thank you for keeping Reddit safe.');
+        } catch (err) {
+          alert(err.message);
+          btn.disabled = false;
+          btn.textContent = 'Submit Report';
+        }
+      });
+      return;
+    }
+
     const collapseToggle = e.target.closest('.collapse-toggle');
     if (collapseToggle) {
       e.preventDefault();
@@ -601,12 +706,11 @@
         // until the person actually asks for it.
         if (expandoDiv.dataset.populated === 'false') {
           const type = expandoBtn.dataset.expandoType;
-          let data = {};
-          try {
-            data = JSON.parse(expandoBtn.dataset.expando || '{}');
-          } catch (err) {
-            data = {};
-          }
+          const fullname = expandoBtn.dataset.fullname;
+          // Data is stored in a Map keyed by fullname to avoid round-tripping
+          // JSON through an HTML attribute (which would require HTML-escaping
+          // and then unescaping + JSON.parse on read — error-prone).
+          let data = (ORR._expandoData && ORR._expandoData.get(fullname)) || {};
           expandoDiv.innerHTML = ORR.render.buildExpandoContent(type, data);
           expandoDiv.dataset.populated = 'true';
         } else {
@@ -748,7 +852,7 @@
         let html = roots.map(ORR.render.commentNode).join('');
 
         if (remaining.length) {
-          html += `<div class="morecomments" data-parent-id="${parentId}" data-children='${ORR.escapeHtml(JSON.stringify(remaining))}'>
+          html += `<div class="morecomments" data-parent-id="${parentId}" data-children='${JSON.stringify(remaining)}'>
             <a href="#">load more comments (${remaining.length})</a>
           </div>`;
         }
@@ -758,6 +862,144 @@
         stub.innerHTML = `<span class="morecomments-error">${ORR.escapeHtml(err.message)}</span>`;
       }
       return;
+    }
+  });
+
+  // ---- Keyboard Navigation Shortcuts ----
+  let currentFocusedIndex = -1;
+
+  function getVisibleThings() {
+    return Array.from(document.querySelectorAll('.thing')).filter((el) => el.offsetWidth > 0 && el.offsetHeight > 0);
+  }
+
+  function setFocusedThing(index) {
+    const things = getVisibleThings();
+    if (!things.length) return;
+    things.forEach((t) => t.classList.remove('keyboard-focus'));
+    if (index < 0) index = 0;
+    if (index >= things.length) index = things.length - 1;
+    currentFocusedIndex = index;
+    const target = things[index];
+    if (target) {
+      target.classList.add('keyboard-focus');
+      target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function toggleShortcutsModal() {
+    let modal = document.getElementById('orr-shortcuts-modal');
+    if (modal) {
+      modal.remove();
+      return;
+    }
+    modal = document.createElement('div');
+    modal.id = 'orr-shortcuts-modal';
+    modal.className = 'orr-modal-overlay';
+    modal.innerHTML = `
+      <div class="orr-modal">
+        <div class="orr-modal-header">
+          <h2>Keyboard Shortcuts</h2>
+          <button class="orr-modal-close">&times;</button>
+        </div>
+        <div class="orr-modal-body">
+          <table class="orr-shortcuts-table">
+            <tr><td><kbd>j</kbd> / <kbd>↓</kbd></td><td>Next post / comment</td></tr>
+            <tr><td><kbd>k</kbd> / <kbd>↑</kbd></td><td>Previous post / comment</td></tr>
+            <tr><td><kbd>a</kbd></td><td>Upvote</td></tr>
+            <tr><td><kbd>z</kbd></td><td>Downvote</td></tr>
+            <tr><td><kbd>e</kbd></td><td>Toggle expando (media preview)</td></tr>
+            <tr><td><kbd>c</kbd></td><td>Open comments</td></tr>
+            <tr><td><kbd>l</kbd></td><td>Open post link in new tab</td></tr>
+            <tr><td><kbd>s</kbd></td><td>Save post / comment</td></tr>
+            <tr><td><kbd>h</kbd></td><td>Hide post</td></tr>
+            <tr><td><kbd>r</kbd></td><td>Reply to comment</td></tr>
+            <tr><td><kbd>?</kbd></td><td>Toggle shortcuts help</td></tr>
+          </table>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('.orr-modal-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    // Ignore input/textarea/editable
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+    const things = getVisibleThings();
+    if (!things.length && e.key !== '?') return;
+
+    switch (e.key) {
+      case 'j':
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedThing(currentFocusedIndex + 1);
+        break;
+      case 'k':
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedThing(currentFocusedIndex - 1);
+        break;
+      case 'a':
+        if (currentFocusedIndex >= 0 && things[currentFocusedIndex]) {
+          const upBtn = things[currentFocusedIndex].querySelector('.arrow.up');
+          if (upBtn) upBtn.click();
+        }
+        break;
+      case 'z':
+        if (currentFocusedIndex >= 0 && things[currentFocusedIndex]) {
+          const downBtn = things[currentFocusedIndex].querySelector('.arrow.down');
+          if (downBtn) downBtn.click();
+        }
+        break;
+      case 'e':
+        if (currentFocusedIndex >= 0 && things[currentFocusedIndex]) {
+          const expando = things[currentFocusedIndex].querySelector('.expando-button');
+          if (expando) expando.click();
+        }
+        break;
+      case 'c':
+        if (currentFocusedIndex >= 0 && things[currentFocusedIndex]) {
+          const link = things[currentFocusedIndex].querySelector('a.title, .flat-list a[href*="/comments/"]');
+          if (link) window.location.href = link.href;
+        }
+        break;
+      case 'l':
+        if (currentFocusedIndex >= 0 && things[currentFocusedIndex]) {
+          const link = things[currentFocusedIndex].querySelector('a.title');
+          if (link) window.open(link.href, '_blank', 'noopener,noreferrer');
+        }
+        break;
+      case 's':
+        if (currentFocusedIndex >= 0 && things[currentFocusedIndex]) {
+          const saveBtn = things[currentFocusedIndex].querySelector('.save-button');
+          if (saveBtn) saveBtn.click();
+        }
+        break;
+      case 'h':
+        if (currentFocusedIndex >= 0 && things[currentFocusedIndex]) {
+          const hideBtn = things[currentFocusedIndex].querySelector('.hide-button');
+          if (hideBtn) hideBtn.click();
+        }
+        break;
+      case 'r':
+        if (currentFocusedIndex >= 0 && things[currentFocusedIndex]) {
+          const replyBtn = things[currentFocusedIndex].querySelector('.reply-button');
+          if (replyBtn) replyBtn.click();
+        }
+        break;
+      case '?':
+        e.preventDefault();
+        toggleShortcutsModal();
+        break;
+      case 'Escape':
+        const modal = document.getElementById('orr-shortcuts-modal');
+        if (modal) modal.remove();
+        break;
     }
   });
 

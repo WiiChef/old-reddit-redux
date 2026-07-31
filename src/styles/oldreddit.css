@@ -2021,3 +2021,75 @@ html.orr-active body {
 #orr-root.theme-classic .commentarea { padding: 0; background: #fff; }
 #orr-root.theme-classic .thing.comment { padding: 3px 0 3px 8px; border-left: 1px solid #ddd; }
 #orr-root.theme-classic .thing.comment .midcol { width: 15px; }
+
+/* ============================================================
+   MODAL OVERLAY & SHORTCUTS TABLE
+   ============================================================ */
+.orr-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
+}
+.orr-modal-header h2 {
+  margin: 0;
+  font-size: 14px;
+  color: #d7dadc;
+}
+.orr-modal-body {
+  padding: 16px;
+}
+.orr-shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.orr-shortcuts-table td {
+  padding: 6px 8px;
+  font-size: 11px;
+  border-bottom: 1px solid #262626;
+}
+.orr-shortcuts-table tr:last-child td {
+  border-bottom: none;
+}
+.orr-shortcuts-table kbd {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 10px;
+  color: #4fbcff;
+}
+
+.orr-share-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.orr-share-field label {
+  width: 70px;
+  font-size: 11px;
+  color: #818384;
+}
+.orr-share-field input {
+  flex: 1;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 3px;
+  padding: 4px 8px;
+  color: #d7dadc;
+  font-size: 11px;
+}
+.orr-share-field button {
+  background: #225d8f;
+  border: none;
+  border-radius: 3px;
+  color: #fff;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.orr-share-field button:hover {
+  background: #1a4a75;
+}

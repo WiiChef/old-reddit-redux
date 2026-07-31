@@ -14,7 +14,6 @@ function timeFilterHtml(currentSort, currentT) {
   // Only show time filters for sorts that support them (top, controversial, best)
   if (!['top', 'controversial', 'best'].includes(currentSort)) return '';
   const items = TIME_FILTERS.map((tf) => {
-    const t = tf.key === currentT ? tf.key : '';
     const cls = tf.key === currentT ? ' selected' : '';
     return `<li class="tabmenu${cls}"><a href="?t=${tf.key}">${tf.label}</a></li>`;
   }).join('');
@@ -100,24 +99,55 @@ ORR.render.header = function header(identity, currentSub, currentSort) {
   const searchHidden = currentSub ? '<input type="hidden" name="restrict_sr" value="on" />' : '';
 
   return `
-  <div id="header">
+  <div id="header" role="banner">
+    <div id="sr-header-area">
+      <div class="width-clip">
+        <div class="dropdown srdrop">
+          <span class="selected title">MY SUBREDDITS</span>
+          <span class="dropdown-arrow">▾</span>
+          <ul class="drop-down-menu sr-dropdown">
+            <li class="heading">Popular Subreddits</li>
+            <li><a href="/">home</a></li>
+            <li><a href="/r/popular">popular</a></li>
+            <li><a href="/r/all">all</a></li>
+            <li><a href="/r/random">random</a></li>
+            <li class="separator"></li>
+            <li><a href="/r/AskReddit">r/AskReddit</a></li>
+            <li><a href="/r/funny">r/funny</a></li>
+            <li><a href="/r/pics">r/pics</a></li>
+            <li><a href="/r/gaming">r/gaming</a></li>
+            <li><a href="/r/news">r/news</a></li>
+            <li><a href="/r/worldnews">r/worldnews</a></li>
+            <li><a href="/r/todayilearned">r/todayilearned</a></li>
+            <li><a href="/r/aww">r/aww</a></li>
+            <li><a href="/r/movies">r/movies</a></li>
+            <li><a href="/r/technology">r/technology</a></li>
+            <li><a href="/r/science">r/science</a></li>
+          </ul>
+        </div>
+        <ul class="flat-list sr-bar hover">
+          <li><a href="/" class="choice ${!currentSub ? 'selected' : ''}">POPULAR</a></li>
+          <li><span class="separator">-</span><a href="/r/all" class="choice">ALL</a></li>
+          <li><span class="separator">-</span><a href="/r/random" class="choice">RANDOM</a></li>
+          <li><span class="separator">-</span><span class="selected title">MY SUBREDDITS</span></li>
+          <li><span class="separator">-</span><a href="/r/AskReddit" class="choice">ASKREDDIT</a></li>
+          <li><span class="separator">-</span><a href="/r/funny" class="choice">FUNNY</a></li>
+          <li><span class="separator">-</span><a href="/r/pics" class="choice">PICS</a></li>
+          <li><span class="separator">-</span><a href="/r/gaming" class="choice">GAMING</a></li>
+          <li><span class="separator">-</span><a href="/r/news" class="choice">NEWS</a></li>
+          <li><span class="separator">-</span><a href="/r/worldnews" class="choice">WORLDNEWS</a></li>
+          <li><span class="separator">-</span><a href="/r/todayilearned" class="choice">TODAYILEARNED</a></li>
+          <li><span class="separator">-</span><a href="/r/aww" class="choice">AWW</a></li>
+          <li><span class="separator">-</span><a href="/r/movies" class="choice">MOVIES</a></li>
+          <li><span class="separator">-</span><a href="/r/technology" class="choice">TECHNOLOGY</a></li>
+          <li><span class="separator">-</span><a href="/r/science" class="choice">SCIENCE</a></li>
+          <li><span class="separator">-</span><a href="/subreddits" class="choice">MORE »</a></li>
+        </ul>
+      </div>
+    </div>
     <div id="header-bottom-left">
       <a id="header-img" href="/" title="reddit: the front page of the internet"></a>
-      <ul id="sr-header-area">
-        ${!currentSub
-          ? `<li class="drop-down drop-down-active">
-               <p class="dropbtn-container">
-                 <span class="siteName dropbtn">popular</span>
-                 <span class="dropdown">▾</span>
-               </p>
-               <ul class="drop-down-menu">
-                 <li class="default"><a href="/">default</a></li>
-                 <li class="all"><a href="/all">all</a></li>
-               </ul>
-             </li>`
-          : `<li class="current-sr"><a href="/r/${escapeHtml(currentSub)}">${subHeading}</a></li>`
-        }
-      </ul>
+      ${currentSub ? `<span class="pagename redditname"><a href="/r/${escapeHtml(currentSub)}">${subHeading}</a></span>` : ''}
     </div>
     <div id="header-bottom-right">
       <div id="user-panel">${userHtml}</div>

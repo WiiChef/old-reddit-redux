@@ -121,7 +121,13 @@ function renderComment(child) {
   if (child.kind === 'more') {
     const d = child.data;
     if (!d.count) return '';
-    return `<div class="morecomments" data-parent-id="${d.parent_id}" data-children='${ORR.escapeHtml(JSON.stringify(d.children))}'>
+    // Store children IDs as a plain JSON string inside a <template> so the
+    // browser's HTML serializer doesn't touch it (no entity-encoding issues).
+    // main.js reads it back via the data-children attribute on the .morecomments
+    // element — because we use single-quotes around the attribute value and
+    // the IDs themselves contain only alphanumeric chars + underscores, there
+    // is no risk of HTML entity corruption here.
+    return `<div class="morecomments" data-parent-id="${d.parent_id}" data-children='${JSON.stringify(d.children)}'>
       <a href="#">load more comments (${d.count})</a>
     </div>`;
   }

@@ -64,3 +64,8 @@ ORR.actions.submit = function submit(subreddit, title, type, url, text, nsfw, sp
   if (spoiler) fields.spoiler = 'yes';
   return postForm('/api/submit', fields);
 };
+
+ORR.actions.report = function report(fullname, reason) {
+  return postForm('/api/report', { thing_id: fullname, reason: reason || 'other', other_reason: reason || 'other' });
+};
+
