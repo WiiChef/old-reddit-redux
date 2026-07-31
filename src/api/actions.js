@@ -33,7 +33,7 @@ async function postForm(path, fields) {
     throw new Error(`Action failed: ${detail || 'unknown error'}`);
   }
   return res.data || {};
-};
+}
 
 // dir: 1 = upvote, -1 = downvote, 0 = unvote
 ORR.actions.vote = function vote(fullname, dir) {

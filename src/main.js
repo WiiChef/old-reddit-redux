@@ -1,6 +1,6 @@
 // src/main.js
 (function () {
-  const { qs, qsa, debounce, parseQuery } = ORR;
+  const { qsa, debounce, parseQuery } = ORR;
   let renderToken = 0; // guards against a stale async render clobbering a newer one
   let infiniteObserver = null; // current IntersectionObserver, one per mounted listing page
   let currentUsername = ''; // cached from identity, used by reply button outside handleRoute scope
@@ -98,9 +98,7 @@
       } else if (match.name === 'subreddit' || match.name === 'subreddit-sort') {
         const sub = match.params[0];
         const sort = match.params[1] || query.sort || 'hot';
-        // Pass through time filter param (t=hour/day/week/month/year/all)
         const fetchQuery = { ...query };
-        if (fetchQuery.t) fetchQuery.t = fetchQuery.t;
         const [listing, about, rules, mods, flairs] = await Promise.all([
           ORR.api.fetchListing(`/r/${sub}/${sort}`, fetchQuery),
           ORR.api.fetchSubredditAbout(sub).catch(() => null),
@@ -187,9 +185,7 @@
         // front page, /hot, /new, /top, /rising, /controversial, /best
         const sort = (match.params[0] || 'hot');
         const path = sort === 'hot' ? '/' : `/${sort}`;
-        // Pass through time filter param (t=hour/day/week/month/year/all)
         const fetchQuery = { ...query };
-        if (fetchQuery.t) fetchQuery.t = fetchQuery.t;
         const listing = await ORR.api.fetchListing(path, fetchQuery);
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, null, sort);
@@ -316,7 +312,13 @@
       disableAnimations: false,
     };
     try {
-      currentSettings = { ...defaults, ...(await chrome.storage.local.get(defaults)) };
+      const stored = await chrome.storage.local.get(Object.keys(defaults));
+      // Filter out undefined/null values so defaults are preserved
+      const clean = {};
+      for (const [k, v] of Object.entries(stored)) {
+        if (v !== undefined && v !== null) clean[k] = v;
+      }
+      currentSettings = { ...defaults, ...clean };
     } catch {
       currentSettings = defaults;
     }
@@ -387,19 +389,6 @@
 
   // ---- Event delegation for votes / save / hide / collapse / reply / etc ----
   document.addEventListener('click', async (e) => {
-    // Search filter changes (use change event, but also handle click for selects)
-    const searchSort = e.target.closest('#search-sort');
-    if (searchSort) {
-      e.preventDefault();
-      applySearchFilters();
-      return;
-    }
-    const searchTime = e.target.closest('#search-time');
-    if (searchTime) {
-      e.preventDefault();
-      applySearchFilters();
-      return;
-    }
     const arrow = e.target.closest('.arrow');
     if (arrow) {
       e.preventDefault();
@@ -471,7 +460,6 @@
     if (replySubmit) {
       e.preventDefault();
       const parentFullname = replySubmit.dataset.parent;
-      const linkId = replySubmit.dataset.linkId;
       const form = replySubmit.closest('.reply-form');
       const textarea = form && form.querySelector('.reply-textarea');
       const text = (textarea && textarea.value.trim()) || '';
@@ -710,7 +698,7 @@
           // Data is stored in a Map keyed by fullname to avoid round-tripping
           // JSON through an HTML attribute (which would require HTML-escaping
           // and then unescaping + JSON.parse on read — error-prone).
-          let data = (ORR._expandoData && ORR._expandoData.get(fullname)) || {};
+          const data = (ORR._expandoData && ORR._expandoData.get(fullname)) || {};
           expandoDiv.innerHTML = ORR.render.buildExpandoContent(type, data);
           expandoDiv.dataset.populated = 'true';
         } else {
@@ -859,7 +847,11 @@
 
         stub.outerHTML = html || '<div class="morecomments">no more comments</div>';
       } catch (err) {
-        stub.innerHTML = `<span class="morecomments-error">${ORR.escapeHtml(err.message)}</span>`;
+        // Preserve retry capability by keeping the stub with its data attributes
+        // and showing a retryable error message instead of destroying the stub.
+        more.textContent = `error: ${ORR.escapeHtml(err.message)} — click to retry`;
+        more.style.color = '#ff4500';
+        return;
       }
       return;
     }
@@ -867,9 +859,29 @@
 
   // ---- Keyboard Navigation Shortcuts ----
   let currentFocusedIndex = -1;
+  let cachedVisibleThings = null;
+
+  // Invalidate cache on navigation or DOM mutations
+  function invalidateThingsCache() {
+    cachedVisibleThings = null;
+  }
+
+  // Called once per route change to invalidate the cache
+  const origMount = mount;
 
   function getVisibleThings() {
-    return Array.from(document.querySelectorAll('.thing')).filter((el) => el.offsetWidth > 0 && el.offsetHeight > 0);
+    if (!cachedVisibleThings) {
+      cachedVisibleThings = Array.from(document.querySelectorAll('.thing')).filter(
+        (el) => el.offsetWidth > 0 && el.offsetHeight > 0
+      );
+    }
+    return cachedVisibleThings;
+  }
+
+  // Invalidate cache after mount (DOM changed)
+  function mount(html) {
+    invalidateThingsCache();
+    origMount(html);
   }
 
   function setFocusedThing(index) {

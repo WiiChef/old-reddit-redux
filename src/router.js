@@ -19,7 +19,7 @@ const ROUTES = [
   { name: 'user', pattern: /^\/user\/([\w-]+)\/?$/ },
   { name: 'submit', pattern: /^\/r\/([\w-]+)?\/submit\/?$/ },
   { name: 'front', pattern: /^\/(hot|new|top|rising|controversial|best)?\/?$/ },
-  { name: 'search', pattern: /^\/(r\/[\w-]+\/)?search\/?$/ },
+  { name: 'search', pattern: /^\/(?:r\/([\w-]+)\/)?search\/?$/ },
   { name: 'domain', pattern: /^\/domain\/([\w.-]+)\/?$/ },
   { name: 'random', pattern: /^\/(r\/[\w-]+\/)?(random|randall)\/?$/ },
 ];
