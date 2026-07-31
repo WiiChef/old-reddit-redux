@@ -37,9 +37,14 @@ global.document = {
       innerHTML: '',
       value: '',
       textContent: '',
+      querySelector() { return null; },
+      querySelectorAll() { return []; },
+      getAttribute() { return null; },
+      setAttribute() {},
+      appendChild() { return this; },
+      firstChild: null,
+      childNodes: [],
     };
-    // Intercept innerHTML setter to also set textContent/value for textarea
-    const origDefine = Object.defineProperty;
     Object.defineProperty(el, 'innerHTML', {
       set(v) { this._inner = v; this.textContent = v; if (tag === 'textarea') this.value = v; },
       get() { return this._inner || ''; },
