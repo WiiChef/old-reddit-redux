@@ -30,7 +30,23 @@ global.document = {
   querySelector() { return null; },
   querySelectorAll() { return []; },
   getElementById() { return null; },
-  createElement() { return { classList: { add() {}, remove() {}, toggle() {} }, style: {}, innerHTML: '' }; },
+  createElement(tag) {
+    const el = {
+      classList: { add() {}, remove() {}, toggle() {} },
+      style: {},
+      innerHTML: '',
+      value: '',
+      textContent: '',
+    };
+    // Intercept innerHTML setter to also set textContent/value for textarea
+    const origDefine = Object.defineProperty;
+    Object.defineProperty(el, 'innerHTML', {
+      set(v) { this._inner = v; this.textContent = v; if (tag === 'textarea') this.value = v; },
+      get() { return this._inner || ''; },
+      configurable: true,
+    });
+    return el;
+  },
   classList: { add() {}, remove() {}, toggle() {} },
 };
 global.window = {
@@ -41,6 +57,12 @@ global.window = {
   history: { pushState() {} },
   IntersectionObserver: class { observe() {}; disconnect() {} },
 };
+global.location = window.location;
+global.HTMLElement = class { constructor() { this.dataset = {}; this.style = {}; } };
+global.DOMParser = class { parseFromString() { return { documentElement: { innerHTML: '' } }; } };
+global.TextEncoder = class { encode() { return new Uint8Array(); } };
+global.btoa = (s) => Buffer.from(s).toString('base64');
+global.atob = (s) => Buffer.from(s, 'base64').toString('utf-8');
 global.fetch = () => Promise.resolve({ ok: true, text: () => Promise.resolve('{}') });
 global.Array = global.Array;
 
