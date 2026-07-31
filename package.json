@@ -5,8 +5,6 @@
   "private": true,
   "scripts": {
     "build": "node build.js",
-    "build:chrome": "node build.js chrome",
-    "build:firefox": "node build.js firefox",
     "build:clean": "node build.js clean",
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix",
