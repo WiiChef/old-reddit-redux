@@ -14,63 +14,6 @@
   let renderToken = 0; // guards against a stale async render clobbering a newer one
   let infiniteObserver = null; // current IntersectionObserver, one per mounted listing page
   let currentUsername = ''; // cached from identity, used by reply button outside handleRoute scope
-  let currentSettings = null; // loaded from chrome.storage, updated via SETTINGS_APPLY
-
-  // Listen for settings changes from popup/options page
-  chrome.runtime.onMessage.addListener((message) => {
-    if (!message || message.type !== 'SETTINGS_APPLY') return;
-    currentSettings = message.settings;
-    applySettings(currentSettings);
-  });
-
-  // Apply settings to the current page
-  function applySettings(settings) {
-    if (!settings) return;
-    const root = document.getElementById('orr-root');
-    if (!root) return;
-
-    // Toggle extension on/off
-    if (!settings.enabled) {
-      document.documentElement.classList.remove('orr-active');
-      return;
-    }
-    document.documentElement.classList.add('orr-active');
-
-    // Theme
-    root.className = root.className.replace(/theme-\w+/g, '').trim();
-    root.classList.add(`theme-${settings.theme}`);
-
-    // Font size
-    root.className = root.className.replace(/font-size-\w+/g, '').trim();
-    root.classList.add(`font-size-${settings.fontSize}`);
-
-    // Compact mode
-    root.classList.toggle('compact-mode', !!settings.compactMode);
-
-    // Show/hide rank numbers
-    qsa('.thing .rank', root).forEach((el) => {
-      el.style.display = settings.showRank ? '' : 'none';
-    });
-
-    // Auto-expand media
-    if (settings.autoExpandMedia) {
-      qsa('.expando-button.collapsed', root).forEach((btn) => {
-        btn.click();
-      });
-    }
-
-    // Disable animations
-    if (settings.disableAnimations) {
-      root.classList.add('no-animations');
-    } else {
-      root.classList.remove('no-animations');
-    }
-
-    // Reload page if enabled was toggled on (to re-render)
-    if (settings._reload) {
-      location.reload();
-    }
-  }
 
   async function handleRoute() {
     const myToken = ++renderToken;
@@ -325,31 +268,8 @@
     document.querySelectorAll('head link[rel="stylesheet"]:not([data-orr])').forEach((l) => l.remove());
 
     root.innerHTML = html;
-    if (currentSettings) applySettings(currentSettings);
   }
 
-  async function loadSettings() {
-    const defaults = {
-      enabled: true,
-      theme: 'dark',
-      fontSize: 'medium',
-      compactMode: false,
-      showRank: true,
-      autoExpandMedia: false,
-      disableAnimations: false,
-    };
-    try {
-      const stored = await chrome.storage.local.get(Object.keys(defaults));
-      // Filter out undefined/null values so defaults are preserved
-      const clean = {};
-      for (const [k, v] of Object.entries(stored)) {
-        if (v !== undefined && v !== null) clean[k] = v;
-      }
-      currentSettings = { ...defaults, ...clean };
-    } catch {
-      currentSettings = defaults;
-    }
-  }
 
   function mountError(err) {
     mount(`<div id="orr-error">
@@ -1081,11 +1001,9 @@
   });
 
   window.addEventListener('orr:locationchange', debounce(handleRoute, 50));
-  loadSettings().finally(() => {
-    if (document.readyState === 'loading') {
-      window.addEventListener('DOMContentLoaded', handleRoute, { once: true });
-    } else {
-      handleRoute();
-    }
-  });
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', handleRoute, { once: true });
+} else {
+  handleRoute();
+}
 })();
