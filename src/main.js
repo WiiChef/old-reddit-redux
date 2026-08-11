@@ -1002,23 +1002,30 @@
   });
 
   // Search form submission — intercept in capture phase so Reddit's SPA
-  // never gets a chance to hijack it and lose restrict_sr.
+  // never gets a chance to hijack it.
   document.addEventListener('submit', (e) => {
     if (e.target.id !== 'search') return;
     e.preventDefault();
     e.stopImmediatePropagation();
     const input = e.target.querySelector('input[name="q"]');
     if (!input || !input.value.trim()) return;
-    // Use the form's action as base path (/r/<sub>/search or /search)
-    let path = e.target.action || '/search';
-    // Ensure trailing slash is removed for router matching
-    path = path.replace(/\/$/, '');
+
+    // Determine scope: use restrict_sr checkbox if present, otherwise sitewide.
+    const restrictCheckbox = e.target.querySelector('#search-restrict-sr');
+    const isScoped = restrictCheckbox && restrictCheckbox.checked;
+    // Extract current sub from the checkbox label text ("r/subname") or pathname
+    let currentSub = null;
+    if (isScoped) {
+      const label = restrictCheckbox.parentElement;
+      const match = label.textContent.match(/^r\/([\w-]+)/);
+      currentSub = match ? match[1] : null;
+    }
+
+    const path = currentSub ? `/r/${currentSub}/search` : '/search';
     const params = new URLSearchParams();
     params.set('q', input.value.trim());
-    // Always enforce restrict_sr when the form targets a subreddit-scoped search.
-    if (path.includes('/r/') || e.target.querySelector('input[name="restrict_sr"]')) {
-      params.set('restrict_sr', 'on');
-    }
+    if (isScoped) params.set('restrict_sr', 'on');
+
     history.pushState(null, '', `${path}?${params.toString()}`);
     window.dispatchEvent(new Event('orr:locationchange'));
   }, true); // capture phase

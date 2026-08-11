@@ -262,6 +262,22 @@ html.orr-active body {
 }
 #search button:hover { color: #d7dadc; }
 
+/* Search "limit to r/<sub>" checkbox toggle */
+.search-limit-to-sub {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: #818384;
+  padding: 0 4px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.search-limit-to-sub input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
 /* ---- Create buttons ---- */
 .create-buttons {
   display: flex;

@@ -94,9 +94,14 @@ ORR.render.header = function header(identity, currentSub, currentSort) {
 
   const tabsHtml = allSorts.map((s) => tab(s, s)).join('');
 
-  // Search form — scoped to current sub if applicable
-  const searchAction = currentSub ? `/r/${escapeHtml(currentSub)}/search` : '/search';
-  const searchHidden = currentSub ? '<input type="hidden" name="restrict_sr" value="on" />' : '';
+  // Search form — always posts to /search; scope is controlled by checkbox
+  const searchAction = '/search';
+  const limitCheckbox = currentSub
+    ? `<label class="search-limit-to-sub">
+        <input type="checkbox" name="restrict_sr" id="search-restrict-sr" checked />
+        r/${escapeHtml(currentSub)}
+      </label>`
+    : '';
 
   return `
   <div id="header" role="banner">
@@ -107,7 +112,7 @@ ORR.render.header = function header(identity, currentSub, currentSort) {
     <div id="header-bottom-right">
       <form id="search" action="${searchAction}" method="get">
         <input type="text" name="q" placeholder="search reddit" autocomplete="off" />
-        ${searchHidden}
+        ${limitCheckbox}
         <button type="submit">search</button>
       </form>
     </div>
