@@ -4,11 +4,14 @@ Recreates the old.reddit.com layout using data pulled live from `www.reddit.com`
 own JSON endpoints. It never sends a request to old.reddit.com — it reskins
 the modern site's data in your browser.
 
+**v0.4.0 is guest-only:** no login/signup panel, no My Subreddits bar, no create post buttons. Browse Reddit anonymously with the classic layout.
+
 ## Releases
 
 | Version | Date | Notes |
 |---------|------|-------|
-| **v0.3.0** | 2025-08-01 | Unpacked ZIP distribution; removed CRX signing |
+| **v0.4.0** | 2025-08-13 | Guest-only mode; search form intercept; dark text fix on post previews |
+| v0.3.0 | 2025-08-01 | Unpacked ZIP distribution; removed CRX signing |
 | v0.2.0 | 2025-08-01 | Subreddit sidebar on post/comment pages; 94 tests |
 | v0.1.1 | 2025-07-31 | Audit fixes: router safety, API error handling |
 | v0.1.0 | 2025-07-31 | Initial release: classic layout, expandos, voting, infinite scroll |
@@ -30,8 +33,8 @@ the modern site's data in your browser.
 
 ### From release zip (recommended)
 
-1. Download `old-reddit-redux-0.3.0.zip` from the
-   [latest release](https://github.com/WiiChef/old-reddit-redux/releases/latest).
+1. Download `old-reddit-redux-0.4.0.zip` from the
+   [latest release](https://github.com/Wii-Chef-Channel/old-reddit-redux/releases/latest).
 2. Open `chrome://extensions` (or your browser's extensions page).
 3. Enable **Developer mode** (top right).
 4. Click **Load unpacked** and select the extracted folder.
@@ -47,7 +50,7 @@ the modern site's data in your browser.
 5. Visit `https://www.reddit.com/` — the classic layout should take over
    automatically on supported routes.
 
-## Supported routes (v0.2)
+## Supported routes
 
 - `/`, `/hot`, `/new`, `/top`, `/rising` — front page listings
 - `/r/<sub>`, `/r/<sub>/<sort>` — subreddit listings
@@ -58,20 +61,12 @@ the modern site's data in your browser.
 Everything else (chat, modmail, settings, mod tools, galleries/polls
 rendering) currently falls through to native reddit.com.
 
-## What's new in v0.2.0
+## What's new in v0.4.0
 
-- **Subreddit sidebar on post/comment pages** — opening a post now shows
-  the full right-column sidebar (subreddit info, member/online counts,
-  description, rules, moderators, join/leave button, navigation links)
-  alongside the post and its comments, matching the layout of
-  old.reddit.com. Previously the sidebar only appeared on subreddit
-  listing pages.
-- **Parallel data fetching** — sidebar metadata (about, rules, mods, flairs)
-  is fetched in parallel with post/comment data via `Promise.all`, so there
-  is zero additional latency.
-- **94 automated tests** covering post page rendering, sidebar content,
-  subreddit sizes, comment counts, edge cases, and structural parity with
-  old.reddit.com layout.
+- **Guest-only mode** — removed My Subreddits header bar, login/signup panel, and create post/community buttons. This extension is now designed for browsing Reddit without an account.
+- **Search form intercept** — the search form submit event is now handled by ORR directly, preventing Reddit's SPA from hijacking navigation and losing `restrict_sr` on subreddit-scoped searches.
+- **Filter changes preserve scope** — changing sort/time filters on a subreddit search page always enforces `restrict_sr=on`, so results never silently widen to all of Reddit.
+- **Dark text fix** — post preview (selftext) expanded content now forces light color (`#e8e8ed`) with `!important` on all `.md` child elements, overriding any dark colors Reddit's SPA injects.
 
 ## Working features
 
@@ -101,7 +96,7 @@ rendering) currently falls through to native reddit.com.
   follow-up "load more" stub is appended for the remainder
 - Inline image/gif previews for direct media links in comments and
   selftext (old reddit itself never did this — genuine enhancement)
-- Classic header with search box and login/karma display
+- Classic header with search box
 
 ## Bug fixes from code review
 
@@ -159,9 +154,6 @@ corrected directly.
   instead of a plain iframe (e.g. Twitter/X) fall back to a thumbnail/link
   card rather than a live interactive widget, since scripts injected via
   innerHTML don't execute.
-- **modhash/auth**: reddit has changed how write-endpoint auth works more
-  than once historically; if voting/saving stops working, check the Network
-  tab on a logged-in session and adjust `src/api/actions.js` accordingly.
 - **Rate limiting**: there's a 30s in-memory cache per URL
   (`src/api/fetch.js`) to cut down on redundant calls; tune `CACHE_TTL_MS`
   if you hit rate limits. Infinite scroll issues fresh requests per page
@@ -188,7 +180,7 @@ src/
   main.js                orchestrates fetch -> render -> mount, event delegation
   api/fetch.js            reads: listings, posts, comments, user, search
   api/actions.js         writes: vote, save, hide, comment, subscribe
-  render/header.js        nav bar
+  render/header.js        nav bar (guest-only, no login/signup)
   render/sidebar.js       subreddit info panel (.side/.titlebox)
   render/listing.js       post list rows + expando (pop-out media)
   render/comments.js      post page + recursive comment tree
