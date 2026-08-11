@@ -1,66 +1,19 @@
 // src/main.js
 (function () {
   const { qsa, debounce, parseQuery } = ORR;
+
+  // Mark the content-script <style> tag so renderMount doesn't strip it.
+  // Content-script CSS is injected at document_start as a bare <style> in
+  // <head> with no identifying attribute.  Tag it NOW (before renderMount
+  // runs and removes every style:not([data-orr])).
+  document.querySelectorAll('head style').forEach((s) => {
+    if (s.textContent.includes('#orr-root')) {
+      s.setAttribute('data-orr', '1');
+    }
+  });
   let renderToken = 0; // guards against a stale async render clobbering a newer one
   let infiniteObserver = null; // current IntersectionObserver, one per mounted listing page
   let currentUsername = ''; // cached from identity, used by reply button outside handleRoute scope
-  let currentSettings = null; // loaded from chrome.storage, updated via SETTINGS_APPLY
-
-  // Listen for settings changes from popup/options page
-  chrome.runtime.onMessage.addListener((message) => {
-    if (!message || message.type !== 'SETTINGS_APPLY') return;
-    currentSettings = message.settings;
-    applySettings(currentSettings);
-  });
-
-  // Apply settings to the current page
-  function applySettings(settings) {
-    if (!settings) return;
-    const root = document.getElementById('orr-root');
-    if (!root) return;
-
-    // Toggle extension on/off
-    if (!settings.enabled) {
-      document.documentElement.classList.remove('orr-active');
-      return;
-    }
-    document.documentElement.classList.add('orr-active');
-
-    // Theme
-    root.className = root.className.replace(/theme-\w+/g, '').trim();
-    root.classList.add(`theme-${settings.theme}`);
-
-    // Font size
-    root.className = root.className.replace(/font-size-\w+/g, '').trim();
-    root.classList.add(`font-size-${settings.fontSize}`);
-
-    // Compact mode
-    root.classList.toggle('compact-mode', !!settings.compactMode);
-
-    // Show/hide rank numbers
-    qsa('.thing .rank', root).forEach((el) => {
-      el.style.display = settings.showRank ? '' : 'none';
-    });
-
-    // Auto-expand media
-    if (settings.autoExpandMedia) {
-      qsa('.expando-button.collapsed', root).forEach((btn) => {
-        btn.click();
-      });
-    }
-
-    // Disable animations
-    if (settings.disableAnimations) {
-      root.classList.add('no-animations');
-    } else {
-      root.classList.remove('no-animations');
-    }
-
-    // Reload page if enabled was toggled on (to re-render)
-    if (settings._reload) {
-      location.reload();
-    }
-  }
 
   async function handleRoute() {
     const myToken = ++renderToken;
@@ -160,12 +113,15 @@
       } else if (match.name === 'search') {
         // match.params[0] is "r/<sub>/" when this is a subreddit-scoped
         // search (e.g. /r/pics/search) and undefined for sitewide search.
-        // This was previously discarded entirely, so a search made from
-        // inside a subreddit would silently search all of Reddit instead.
         const scopedSubMatch = match.params[0] && match.params[0].match(/^r\/([\w-]+)\//);
         const scopedSub = scopedSubMatch && scopedSubMatch[1];
-        const searchPath = scopedSub ? `/r/${scopedSub}/search` : '/search';
-        const searchParams = scopedSub ? { ...query, restrict_sr: 'on' } : query;
+        // Also check pathname directly as fallback — prevents silent
+        // sitewide search if restrict_sr param was lost during navigation.
+        const pathScoped = location.pathname.includes('/search') && !scopedSub;
+        const isScoped = !!scopedSub || (pathScoped && query.restrict_sr);
+        const finalSub = scopedSub || null;
+        const searchPath = finalSub ? `/r/${finalSub}/search` : '/search';
+        const searchParams = isScoped ? { ...query, restrict_sr: 'on' } : query;
         const listing = await ORR.api.fetchListing(searchPath, { q: query.q || '', ...searchParams });
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, scopedSub);
@@ -299,43 +255,24 @@
       document.documentElement.removeAttribute('style');
       document.body.removeAttribute('style');
 
-      // Remove Reddit's injected <style> tags from <head> — they contain
-      // rules (e.g. semi-transparent backgrounds, overlay backdrops) that
-      // leak through and dim our content even after we replace body.innerHTML.
-      document.querySelectorAll('head style:not([data-orr])').forEach((s) => s.remove());
-      document.querySelectorAll('head link[rel="stylesheet"]:not([data-orr])').forEach((l) => l.remove());
-
       document.body.innerHTML = '';
       root = document.createElement('div');
       root.id = 'orr-root';
       document.body.appendChild(root);
     }
+
+    // Remove Reddit's injected <style> tags from <head> on EVERY render.
+    // The SPA can re-inject styles during navigation (e.g. dark-theme CSS
+    // vars, subreddit theme overrides). If we don't strip them each time,
+    // they leak into #orr-root and override our hardcoded dark palette —
+    // e.g. comment text turning dark-on-dark. Only our own CSS carries
+    // data-orr and is preserved.
+    document.querySelectorAll('head style:not([data-orr])').forEach((s) => s.remove());
+    document.querySelectorAll('head link[rel="stylesheet"]:not([data-orr])').forEach((l) => l.remove());
+
     root.innerHTML = html;
-    if (currentSettings) applySettings(currentSettings);
   }
 
-  async function loadSettings() {
-    const defaults = {
-      enabled: true,
-      theme: 'dark',
-      fontSize: 'medium',
-      compactMode: false,
-      showRank: true,
-      autoExpandMedia: false,
-      disableAnimations: false,
-    };
-    try {
-      const stored = await chrome.storage.local.get(Object.keys(defaults));
-      // Filter out undefined/null values so defaults are preserved
-      const clean = {};
-      for (const [k, v] of Object.entries(stored)) {
-        if (v !== undefined && v !== null) clean[k] = v;
-      }
-      currentSettings = { ...defaults, ...clean };
-    } catch {
-      currentSettings = defaults;
-    }
-  }
 
   function mountError(err) {
     mount(`<div id="orr-error">
@@ -395,6 +332,11 @@
     const params = new URLSearchParams(location.search || '');
     params.set('sort', sortSelect.value);
     params.set('t', timeSelect.value);
+    // Always enforce restrict_sr on subreddit-scoped search paths so
+    // changing sort/time filters never silently widens to all of Reddit.
+    if (location.pathname.match(/\/r\/[\w-]+\/search/)) {
+      params.set('restrict_sr', 'on');
+    }
     const newUrl = `${location.pathname}?${params.toString()}`;
     history.pushState(null, '', newUrl);
     window.dispatchEvent(new Event('orr:locationchange'));
@@ -1059,6 +1001,25 @@
     }
   });
 
+  // Search form submission — intercept so Reddit's SPA doesn't hijack it
+  document.addEventListener('submit', (e) => {
+    if (e.target.id !== 'search') return;
+    e.preventDefault();
+    const input = e.target.querySelector('input[name="q"]');
+    if (!input || !input.value.trim()) return;
+    // Use the form's action as base path (/r/<sub>/search or /search)
+    let path = e.target.action || '/search';
+    // Ensure trailing slash is removed for router matching
+    path = path.replace(/\/$/, '');
+    const params = new URLSearchParams();
+    params.set('q', input.value.trim());
+    if (e.target.querySelector('input[name="restrict_sr"]')) {
+      params.set('restrict_sr', 'on');
+    }
+    history.pushState(null, '', `${path}?${params.toString()}`);
+    window.dispatchEvent(new Event('orr:locationchange'));
+  });
+
   // Search filter change events (selects fire 'change', not 'click')
   document.addEventListener('change', (e) => {
     if (e.target.id === 'search-sort' || e.target.id === 'search-time') {
@@ -1067,11 +1028,9 @@
   });
 
   window.addEventListener('orr:locationchange', debounce(handleRoute, 50));
-  loadSettings().finally(() => {
-    if (document.readyState === 'loading') {
-      window.addEventListener('DOMContentLoaded', handleRoute, { once: true });
-    } else {
-      handleRoute();
-    }
-  });
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', handleRoute, { once: true });
+} else {
+  handleRoute();
+}
 })();

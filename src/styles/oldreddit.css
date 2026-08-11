@@ -693,7 +693,7 @@ a[hidden] { display: none; }
   margin-top: 8px;
   font-size: 13px;
   line-height: 1.6;
-  color: #d7dadc;
+  color: #e8e8ed;
 }
 
 .commentarea {
@@ -798,8 +798,13 @@ p.parent a { display: none; }
 .md-container { }
 
 /* The .md div inside usertext-body (markdown content wrapper) */
-.usertext-body .md {
-  /* Inherits from parent usertext-body styling */
+.usertext-body .md,
+.usertext-body .md p,
+.usertext-body .md div,
+.usertext-body .md span,
+.usertext-body .md li,
+.usertext-body .md blockquote {
+  color: #e8e8ed !important;
 }
 
 /* Usertext form wrapper */

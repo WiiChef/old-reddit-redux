@@ -100,67 +100,16 @@ ORR.render.header = function header(identity, currentSub, currentSort) {
 
   return `
   <div id="header" role="banner">
-    <div id="sr-header-area">
-      <div class="width-clip">
-        <div class="dropdown srdrop">
-          <span class="selected title">MY SUBREDDITS</span>
-          <span class="dropdown-arrow">▾</span>
-          <ul class="drop-down-menu sr-dropdown">
-            <li class="heading">Popular Subreddits</li>
-            <li><a href="/">home</a></li>
-            <li><a href="/r/popular">popular</a></li>
-            <li><a href="/r/all">all</a></li>
-            <li><a href="/r/random">random</a></li>
-            <li class="separator"></li>
-            <li><a href="/r/AskReddit">r/AskReddit</a></li>
-            <li><a href="/r/funny">r/funny</a></li>
-            <li><a href="/r/pics">r/pics</a></li>
-            <li><a href="/r/gaming">r/gaming</a></li>
-            <li><a href="/r/news">r/news</a></li>
-            <li><a href="/r/worldnews">r/worldnews</a></li>
-            <li><a href="/r/todayilearned">r/todayilearned</a></li>
-            <li><a href="/r/aww">r/aww</a></li>
-            <li><a href="/r/movies">r/movies</a></li>
-            <li><a href="/r/technology">r/technology</a></li>
-            <li><a href="/r/science">r/science</a></li>
-          </ul>
-        </div>
-        <ul class="flat-list sr-bar hover">
-          <li><a href="/" class="choice ${!currentSub ? 'selected' : ''}">POPULAR</a></li>
-          <li><span class="separator">-</span><a href="/r/all" class="choice">ALL</a></li>
-          <li><span class="separator">-</span><a href="/r/random" class="choice">RANDOM</a></li>
-          <li><span class="separator">-</span><span class="selected title">MY SUBREDDITS</span></li>
-          <li><span class="separator">-</span><a href="/r/AskReddit" class="choice">ASKREDDIT</a></li>
-          <li><span class="separator">-</span><a href="/r/funny" class="choice">FUNNY</a></li>
-          <li><span class="separator">-</span><a href="/r/pics" class="choice">PICS</a></li>
-          <li><span class="separator">-</span><a href="/r/gaming" class="choice">GAMING</a></li>
-          <li><span class="separator">-</span><a href="/r/news" class="choice">NEWS</a></li>
-          <li><span class="separator">-</span><a href="/r/worldnews" class="choice">WORLDNEWS</a></li>
-          <li><span class="separator">-</span><a href="/r/todayilearned" class="choice">TODAYILEARNED</a></li>
-          <li><span class="separator">-</span><a href="/r/aww" class="choice">AWW</a></li>
-          <li><span class="separator">-</span><a href="/r/movies" class="choice">MOVIES</a></li>
-          <li><span class="separator">-</span><a href="/r/technology" class="choice">TECHNOLOGY</a></li>
-          <li><span class="separator">-</span><a href="/r/science" class="choice">SCIENCE</a></li>
-          <li><span class="separator">-</span><a href="/subreddits" class="choice">MORE »</a></li>
-        </ul>
-      </div>
-    </div>
     <div id="header-bottom-left">
       <a id="header-img" href="/" title="reddit: the front page of the internet"></a>
       ${currentSub ? `<span class="pagename redditname"><a href="/r/${escapeHtml(currentSub)}">${subHeading}</a></span>` : ''}
     </div>
     <div id="header-bottom-right">
-      <div id="user-panel">${userHtml}</div>
       <form id="search" action="${searchAction}" method="get">
         <input type="text" name="q" placeholder="search reddit" autocomplete="off" />
         ${searchHidden}
         <button type="submit">search</button>
       </form>
-      ${loggedIn ? `
-      <div class="create-buttons">
-        <a href="${currentSub ? `/r/${escapeHtml(currentSub)}/submit` : '/submit'}" class="create-post-btn">create post</a>
-        <a href="/community" class="create-community-btn">create community</a>
-      </div>` : ''}
     </div>
     <div class="tabmenu-container">
       <ul class="tabmenu">
