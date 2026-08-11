@@ -1013,8 +1013,7 @@
     }
   });
 
-  // Search form submission — intercept in capture phase so Reddit's SPA
-  // never gets a chance to hijack it.
+  // Search form submission — append query to current subreddit URL instead of using Reddit's search API
   document.addEventListener('submit', (e) => {
     if (e.target.id !== 'search') return;
     e.preventDefault();
@@ -1022,17 +1021,21 @@
     const input = e.target.querySelector('input[name="q"]');
     if (!input || !input.value.trim()) return;
 
-    // Determine scope: checkbox checked + we have a current subreddit.
     const restrictCheckbox = e.target.querySelector('#search-restrict-sr');
     const isScoped = restrictCheckbox && restrictCheckbox.checked && currentSubreddit;
 
-    const path = isScoped ? `/r/${currentSubreddit}/search` : '/search';
-    const params = new URLSearchParams();
-    params.set('q', input.value.trim());
-    if (isScoped) params.set('restrict_sr', 'on');
-
-    history.pushState(null, '', `${path}?${params.toString()}`);
-    window.dispatchEvent(new Event('orr:locationchange'));
+    if (isScoped) {
+      // Old.reddit style: /r/sub/search?q=term
+      // Don't use Reddit's JSON search endpoint, just navigate to the subreddit search page
+      const searchUrl = `/r/${currentSubreddit}/search?q=${encodeURIComponent(input.value.trim())}`;
+      history.pushState(null, '', searchUrl);
+      window.dispatchEvent(new Event('orr:locationchange'));
+    } else {
+      // Sitewide search
+      const searchUrl = `/search?q=${encodeURIComponent(input.value.trim())}`;
+      history.pushState(null, '', searchUrl);
+      window.dispatchEvent(new Event('orr:locationchange'));
+    }
   }, true); // capture phase
 
   // Search filter change events (selects fire 'change', not 'click')
