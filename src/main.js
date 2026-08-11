@@ -1025,9 +1025,8 @@
     const isScoped = restrictCheckbox && restrictCheckbox.checked && currentSubreddit;
 
     if (isScoped) {
-      // Old.reddit style: /r/sub/search?q=term
-      // Don't use Reddit's JSON search endpoint, just navigate to the subreddit search page
-      const searchUrl = `/r/${currentSubreddit}/search?q=${encodeURIComponent(input.value.trim())}`;
+      // Old.reddit style: /r/sub/search?q=term&restrict_sr=on
+      const searchUrl = `/r/${currentSubreddit}/search?q=${encodeURIComponent(input.value.trim())}&restrict_sr=on`;
       history.pushState(null, '', searchUrl);
       window.dispatchEvent(new Event('orr:locationchange'));
     } else {
