@@ -121,15 +121,15 @@
         listingAfter = listing.data.after;
         nextPageFetcher = (after) => ORR.api.fetchUserListing(username, page, { ...params, after });
       } else if (match.name === 'search') {
-        // match.params[0] is "r/<sub>/" when this is a subreddit-scoped
-        // search (e.g. /r/pics/search) and undefined for sitewide search.
-        const scopedSubMatch = match.params[0] && match.params[0].match(/^r\/([\w-]+)\//);
-        const scopedSub = scopedSubMatch && scopedSubMatch[1];
+        // The search route pattern captures just the subreddit name in group 1,
+        // so match.params[0] is the sub name (e.g. "pics") or undefined for
+        // sitewide search.
+        const scopedSub = match.params[0] || null;
         // Also check pathname directly as fallback — prevents silent
         // sitewide search if restrict_sr param was lost during navigation.
         const pathScoped = location.pathname.includes('/search') && !scopedSub;
         const isScoped = !!scopedSub || (pathScoped && query.restrict_sr);
-        const finalSub = scopedSub || null;
+        const finalSub = scopedSub;
         const searchPath = finalSub ? `/r/${finalSub}/search` : '/search';
         // Always force restrict_sr=on for subreddit-scoped searches
         const searchParams = isScoped ? { ...query, restrict_sr: 'on' } : query;
