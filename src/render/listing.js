@@ -49,14 +49,17 @@ function detectExpando(d) {
       const mime = meta.m || '';
       // Video (v.redd.it, GIFs stored as video)
       if (mime.startsWith('video')) {
-        const videoUrl = meta.s && (meta.s.gif || meta.s.u);
+        // Always use the DASH MP4 URL for the actual video source.
+        // meta.s.gif is only a GIF preview image — never use it as the
+        // video src (it would play a still image and kill audio).
+        const videoUrl = meta.s && meta.s.u;
         if (videoUrl) {
           return {
             type: 'video',
             defaultExpanded: false,
             data: {
               fallbackUrl: videoUrl,
-              isGif: !!meta.s.gif,
+              isGif: false,
               width: meta.s && meta.s.x || 640,
               height: meta.s && meta.s.y || 360,
             },
@@ -189,7 +192,7 @@ function expandoContainerHtml(expando, d) {
     // Cheap (text-only) so it's fine to render eagerly, matching old
     // reddit's default-expanded behavior for self posts in listings.
     const ta = document.createElement('textarea');
-    ta.innerHTML = d.selftext_html || '';
+    ta.innerHTML = d.selftext_html || (d.selftext ? `<p>${escapeHtml(d.selftext)}</p>` : '');
     const bodyHtml = ORR.render.embedMedia ? ORR.render.embedMedia(ta.value) : ta.value;
     return `<div class="expando expando-expanded" data-fullname="${d.name}">
       <div class="usertext-body">${bodyHtml}</div>
@@ -226,7 +229,7 @@ ORR.render.buildExpandoContent = function buildExpandoContent(type, data) {
   if (type === 'video') {
     return `<div class="media-preview no-constraints-when-pinned" style="max-width:${data.width}px">
       <div class="media-preview-content video-player">
-        <video class="preview" controls ${data.isGif ? 'autoplay muted loop' : ''} playsinline
+        <video class="preview" controls preload="metadata" ${data.isGif ? 'autoplay muted loop' : ''} playsinline
           style="max-width:100%;max-height:512px" src="${data.fallbackUrl}"></video>
       </div>
     </div>`;
