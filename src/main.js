@@ -14,6 +14,7 @@
   let renderToken = 0; // guards against a stale async render clobbering a newer one
   let infiniteObserver = null; // current IntersectionObserver, one per mounted listing page
   let currentUsername = ''; // cached from identity, used by reply button outside handleRoute scope
+  let currentSubreddit = ''; // cached subreddit for search scoping
 
   async function handleRoute() {
     const myToken = ++renderToken;
@@ -39,6 +40,15 @@
       // after mount without re-deriving the route's fetch semantics.
       let listingAfter = null;
       let nextPageFetcher = null;
+
+      // Cache current subreddit for search scoping
+      let routeSub = null;
+      if (['post', 'subreddit', 'subreddit-sort'].includes(match.name)) {
+        routeSub = match.params[0];
+      } else if (match.name === 'search') {
+        const sm = match.params[0] && match.params[0].match(/^r\/([\w-]+)\//);
+        routeSub = sm ? sm[1] : null;
+      }
 
       if (match.name === 'post') {
         const [sub, id] = match.params;
@@ -155,6 +165,8 @@
         listingAfter = listing.data.after;
         nextPageFetcher = (after) => ORR.api.fetchListing(path, { ...fetchQuery, after });
       }
+
+      currentSubreddit = routeSub || '';
 
       mount(html);
       if (nextPageFetcher) setupInfiniteScroll(nextPageFetcher, listingAfter);
@@ -1010,18 +1022,11 @@
     const input = e.target.querySelector('input[name="q"]');
     if (!input || !input.value.trim()) return;
 
-    // Determine scope: use restrict_sr checkbox if present, otherwise sitewide.
+    // Determine scope: checkbox checked + we have a current subreddit.
     const restrictCheckbox = e.target.querySelector('#search-restrict-sr');
-    const isScoped = restrictCheckbox && restrictCheckbox.checked;
-    // Extract current sub from the checkbox label text ("r/subname") or pathname
-    let currentSub = null;
-    if (isScoped) {
-      const label = restrictCheckbox.parentElement;
-      const match = label.textContent.match(/^r\/([\w-]+)/);
-      currentSub = match ? match[1] : null;
-    }
+    const isScoped = restrictCheckbox && restrictCheckbox.checked && currentSubreddit;
 
-    const path = currentSub ? `/r/${currentSub}/search` : '/search';
+    const path = isScoped ? `/r/${currentSubreddit}/search` : '/search';
     const params = new URLSearchParams();
     params.set('q', input.value.trim());
     if (isScoped) params.set('restrict_sr', 'on');

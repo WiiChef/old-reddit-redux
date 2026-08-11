@@ -98,7 +98,7 @@ ORR.render.header = function header(identity, currentSub, currentSort) {
   const searchAction = '/search';
   const limitCheckbox = currentSub
     ? `<label class="search-limit-to-sub">
-        <input type="checkbox" name="restrict_sr" id="search-restrict-sr" checked />
+        <input type="checkbox" name="restrict_sr" id="search-restrict-sr" checked data-sub="${escapeHtml(currentSub)}" />
         r/${escapeHtml(currentSub)}
       </label>`
     : '';
