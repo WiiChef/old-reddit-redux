@@ -226,7 +226,7 @@ ORR.render.buildExpandoContent = function buildExpandoContent(type, data) {
   if (type === 'video') {
     return `<div class="media-preview no-constraints-when-pinned" style="max-width:${data.width}px">
       <div class="media-preview-content video-player">
-        <video class="preview" controls autoplay ${data.isGif ? 'muted loop' : ''} playsinline
+        <video class="preview" controls ${data.isGif ? 'autoplay muted loop' : ''} playsinline
           style="max-width:100%;max-height:512px" src="${data.fallbackUrl}"></video>
       </div>
     </div>`;

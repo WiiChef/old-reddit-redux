@@ -89,7 +89,7 @@ ORR.api.fetchPostAndComments = function fetchPostAndComments(path, params = {}) 
 };
 
 ORR.api.fetchUser = function fetchUser(username, params = {}) {
-  return ORR.api.fetchListing(`/user/${username}`, params);
+  return ORR.api.fetchListing(`/user/${username}/submitted`, params);
 };
 
 ORR.api.fetchUserListing = function fetchUserListing(username, page, params = {}) {
