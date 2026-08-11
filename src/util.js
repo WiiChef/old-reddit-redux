@@ -59,10 +59,6 @@ ORR.debounce = function debounce(fn, ms) {
 // which is fine for a content-script-lifetime cache.
 ORR.cache = new Map();
 
-// Shared expando (media preview) data store — populated by listing.js
-// during render, read by main.js on lazy expando expansion.
-ORR._expandoData = new Map();
-
 // Sends a fetch request to the background service worker rather than calling
 // fetch() directly here. Content-script fetches are subject to the host
 // page's CSP, which reddit.com uses in a way that can reject even
