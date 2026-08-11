@@ -388,7 +388,8 @@ html.orr-active body {
 .thing.stickied:hover {
   background: #002412;
 }
-.thing.archived { opacity: 0.65; }
+/* Archived posts/comments are no longer dimmed */
+/* .thing.archived { opacity: 0.65; } */
 .thing .rank {
   width: 20px;
   text-align: right;
@@ -933,10 +934,10 @@ a.author.may-blank { }
   border-left-color: #225d8f;
 }
 
-/* Archived comment styling */
-.thing.comment.archived .entry {
+/* Archived comment styling - disabled to keep comments undimmed */
+/* .thing.comment.archived .entry {
   opacity: 0.6;
-}
+} */
 
 /* Locked comment styling */
 .thing.comment.locked .reply-button {
