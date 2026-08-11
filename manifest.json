@@ -19,10 +19,8 @@
     }
   ],
   "action": {
-    "default_title": "Old Reddit Redux — toggle classic layout",
-    "default_popup": "src/popup.html"
+    "default_title": "Old Reddit Redux — toggle classic layout"
   },
-  "options_page": "src/options.html",
   "background": {
     "service_worker": "src/background.js"
   }
