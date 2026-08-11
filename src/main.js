@@ -131,14 +131,15 @@
         const isScoped = !!scopedSub || (pathScoped && query.restrict_sr);
         const finalSub = scopedSub || null;
         const searchPath = finalSub ? `/r/${finalSub}/search` : '/search';
+        // Always force restrict_sr=on for subreddit-scoped searches
         const searchParams = isScoped ? { ...query, restrict_sr: 'on' } : query;
-        const listing = await ORR.api.fetchListing(searchPath, { q: query.q || '', ...searchParams });
+        const listing = await ORR.api.fetchListing(searchPath, { q: query.q || '', ...searchParams, restrict_sr: finalSub ? 'on' : undefined });
         if (myToken !== renderToken) return;
         const headerHtml = ORR.render.header(identity, scopedSub);
         html = ORR.render.listing(listing, { headerHtml });
         listingAfter = listing.data.after;
         nextPageFetcher = (after) =>
-          ORR.api.fetchListing(searchPath, { q: query.q || '', ...searchParams, after });
+          ORR.api.fetchListing(searchPath, { q: query.q || '', ...searchParams, restrict_sr: finalSub ? 'on' : undefined, after });
       } else if (match.name === 'domain') {
         // /domain/example.com
         const domain = match.params[0];
