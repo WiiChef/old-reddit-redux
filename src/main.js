@@ -1001,10 +1001,12 @@
     }
   });
 
-  // Search form submission — intercept so Reddit's SPA doesn't hijack it
+  // Search form submission — intercept in capture phase so Reddit's SPA
+  // never gets a chance to hijack it and lose restrict_sr.
   document.addEventListener('submit', (e) => {
     if (e.target.id !== 'search') return;
     e.preventDefault();
+    e.stopImmediatePropagation();
     const input = e.target.querySelector('input[name="q"]');
     if (!input || !input.value.trim()) return;
     // Use the form's action as base path (/r/<sub>/search or /search)
@@ -1013,12 +1015,13 @@
     path = path.replace(/\/$/, '');
     const params = new URLSearchParams();
     params.set('q', input.value.trim());
-    if (e.target.querySelector('input[name="restrict_sr"]')) {
+    // Always enforce restrict_sr when the form targets a subreddit-scoped search.
+    if (path.includes('/r/') || e.target.querySelector('input[name="restrict_sr"]')) {
       params.set('restrict_sr', 'on');
     }
     history.pushState(null, '', `${path}?${params.toString()}`);
     window.dispatchEvent(new Event('orr:locationchange'));
-  });
+  }, true); // capture phase
 
   // Search filter change events (selects fire 'change', not 'click')
   document.addEventListener('change', (e) => {
